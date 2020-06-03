@@ -1,2 +1,2 @@
-# dspg20broadbandERS
-2020 Repository for DSPG USDA-ERS partnership
+# DSPG 2020 USDA-ERS Broadband
+Repository for 2020 DSPG USDA-ERS partnership
