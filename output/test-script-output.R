@@ -1,0 +1,1 @@
+# test output script to initialize output directory
