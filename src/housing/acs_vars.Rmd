@@ -1,0 +1,19 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(acs)
+```
+
+
+```{r}
+hamilton = geo.make(state="IN", county="Hamilton")
+acs.fetch(geo=hamilton,endyear=2011,col.names="pretty",table.number="B01003")
+```
+
+```{r}
+housing_vars = acs.lookup(endyear=2011,keyword="Housing")
+housing_vars@results$variable.name
+```
