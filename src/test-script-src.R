@@ -1,1 +1,0 @@
-# test script to initialize src directory
