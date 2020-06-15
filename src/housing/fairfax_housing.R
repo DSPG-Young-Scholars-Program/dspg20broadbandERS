@@ -17,7 +17,7 @@ library(dplyr)
 
 setwd("~/git/dspg20broadbandERS/src/housing")
 
-housing_units <- readOGR(dsn="~/../sdad/project_data/ffx/comm_fairfax/housing_stock_2018/Current_Housing_Units/",layer="Current_Housing_Units")
+housing_units <- readOGR(dsn="~/git/dspg20broadbandERS/data/fairfax-data/Current_Housing_Units/",layer="Current_Housing_Units")
 
 # Metadata (from IPLS data dictionary):
 # PIN         parcel identification number
@@ -46,10 +46,10 @@ housing_units <- readOGR(dsn="~/../sdad/project_data/ffx/comm_fairfax/housing_st
 # -----------------------------------------
 
 # now read in tax assessment data and join all by parcel ID
-tax_parcel <- fread("~/../sdad/project_data/ffx/comm_fairfax/housing_stock_2018/Tax_Administration's_Real_Estate___Parcels_Data.csv")
-tax_assessment <- fread("~/../sdad/project_data/ffx/comm_fairfax/housing_stock_2018/Tax_Administration's_Real_Estate__Assessed_Values.csv")
-tax_dwelling <- fread("~/../sdad/project_data/ffx/comm_fairfax/housing_stock_2018/Tax_Administration's_Real_Estate__Dwelling_Data.csv")
-tax_land <- fread("~/../sdad/project_data/ffx/comm_fairfax/housing_stock_2018/Tax_Administration's_Real_Estate__Land_Data.csv")
+tax_parcel <- fread("~/git/dspg20broadbandERS/data/fairfax-data/Tax_Administration's_Real_Estate___Parcels_Data.csv")
+tax_assessment <- fread("~/git/dspg20broadbandERS/data/fairfax-data/Tax_Administration's_Real_Estate__Assessed_Values.csv")
+tax_dwelling <- fread("~/git/dspg20broadbandERS/data/fairfax-data/Tax_Administration's_Real_Estate__Dwelling_Data.csv")
+tax_land <- fread("~/git/dspg20broadbandERS/data/fairfax-data/Tax_Administration's_Real_Estate__Land_Data.csv")
 
 # -----------------------------------------
 # Variables to include in each table:
@@ -147,7 +147,7 @@ ffx_housing4 <- ffx_housing3 %>%
 # -----------------------------------------
 
 # save the final joined data
-fwrite(ffx_housing4, file="~/../sdad/project_data/ffx/comm_fairfax/housing_stock_2018/fairfax_housing_2018.csv")
+fwrite(ffx_housing4, file="fairfax_housing_2018.csv")
 
 # -----------------------------------------
 
