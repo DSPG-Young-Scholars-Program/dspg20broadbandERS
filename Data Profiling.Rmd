@@ -30,6 +30,7 @@ library(purrr)
 library(sf)  
 library(venn)
 library(ggthemes)
+library(DataExplorer)
 ```
 
 ```{r functions}
@@ -69,6 +70,9 @@ check_complete <- function(df) {
 #Load data 
 library(readr)
 fairfax_housing_2018_geo <- read_csv("~/git/dspg20broadbandERS/data/fairfax-data/fairfax_housing_2018_geo.csv")
+
+first_six <- fairfax_housing_2018_geo %>%
+            select(PARCEL_ID, NUM_UNITS, HOUSING_TYPE, YEAR_BUILT, LONGITUDE, LATITUDE)
 ```
 
 
@@ -88,8 +92,36 @@ sum(is.na(fairfax_housing_2018_geo$LATITUDE))
 
 ```{r}
 #completeness of variables
-check_complete(fairfax_housing_2018_geo) %>% knitr::kable()
+check_complete(first_six) %>% knitr::kable()
 ```
+
+```{r}
+#General exploration of the variables
+plot_intro(first_six)
+
+#distribution of types of housing units
+housing_dist_plot <- ggplot(first_six, aes(x=HOUSING_TYPE)) +
+  geom_bar(fill="light blue", position="stack") +
+                   geom_text(stat = "count", aes(y = ..count.., label = ..count..), position = "identity", vjust=-0.3 ) +
+  labs(x = "Hosuing Type", y = "Count")+
+  theme(
+    axis.title.x = element_text(size = 10, face = "bold"),
+    axis.title.y = element_text(size = 10, face = "bold.italic")
+  )
+housing_dist_plot
+
+# DataExplorer method to plot Housing Type
+plot_bar(first_six$HOUSING_TYPE) 
+
+#distribution of the year houses were built in
+plot_histogram(first_six$YEAR_BUILT)
+
+#number of units distribution
+#returns strange results
+plot_histogram(first_six$NUM_UNITS)
+
+```
+
 
 
 
