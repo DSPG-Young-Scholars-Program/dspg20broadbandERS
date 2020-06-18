@@ -1,0 +1,95 @@
+---
+title: "Data Profiling"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<style>
+  .col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+  .col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+</style>
+
+
+```{r libraries, include=FALSE, message=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, warning = FALSE)
+# install.packages("dplyr")
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(sf)  
+library(venn)
+library(ggthemes)
+```
+
+```{r functions}
+
+check_calc <- function(vec) {
+  blanks <- 0L
+  true_na <- 0L
+  written_na <- 0L
+  len <- length(x = vec)
+  for (elem in vec) {
+    if (is.na(x = elem)) {
+      true_na <- true_na + 1L
+    } else if (elem == "na") {
+      written_na <- written_na + 1L
+    } else if (elem == "") {
+      blanks <- blanks + 1L
+    }
+  }
+  percent_complete <- (len - (blanks + true_na + written_na)) / len
+  unique_values <- length(unique(vec))
+  tibble(blanks = blanks,
+         true_na = true_na,
+         written_na = written_na,
+         percent_complete = percent_complete,
+         unique_values = unique_values)
+}
+check_complete <- function(df) {
+  z <- deparse(substitute(df))
+  map_df(.x = df, .f = check_calc) %>%
+    mutate(column = colnames(df)) %>%
+    mutate(set = print(z))  %>%
+    select(set, column, blanks, true_na, written_na, percent_complete, unique_values)
+}
+```
+
+```{r}
+#Load data 
+library(readr)
+fairfax_housing_2018_geo <- read_csv("~/git/dspg20broadbandERS/data/fairfax-data/fairfax_housing_2018_geo.csv")
+```
+
+
+
+
+```{r eval = F}
+# To find the no. of NAs in the variable 
+sum(is.na(fairfax_housing_2018_geo$PARCEL_ID))
+sum(is.na(fairfax_housing_2018_geo$NUM_UNITS))
+sum(is.na(fairfax_housing_2018_geo$HOUSING_TYPE))
+sum(is.na(fairfax_housing_2018_geo$YEAR_BUILT))
+# 453 NAs in the YEAR_BUILT variable 
+sum(is.na(fairfax_housing_2018_geo$LONGITUDE))
+sum(is.na(fairfax_housing_2018_geo$LATITUDE))
+
+```
+
+```{r}
+#completeness of variables
+check_complete(fairfax_housing_2018_geo) %>% knitr::kable()
+```
+
+
+
