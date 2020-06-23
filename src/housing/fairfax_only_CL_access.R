@@ -67,7 +67,7 @@ names(va_subset)
 con <- get_db_conn()
 
 ffx <- DBI::dbGetQuery(con, statement = paste(
-  "SELECT fips_code, unformatted_apn, formatted_apn, census_tract, lot_number, township, property_indicator, assed_total_value, mkt_total_value, tax_amount, tax_year, assessed_year, acres, land_square_footage, building__square_feet, living_square_feet, year_built, effective_year_built, bedrooms, total_baths, full_baths, half_baths",
+  "SELECT fips_code, unformatted_apn, formatted_apn, census_tract, lot_number, township, property_indicator, assd_total_value, mkt_total_value, tax_amount, tax_year, assessed_year, acres, land_square_footage, building__square_feet, living_square_feet, year_built, effective_year_built, bedrooms, total_baths, full_baths, half_baths",
   "FROM corelogic_prop_tax_2003_2019.va_pl_prop_tax",
   "WHERE fips_code='51059'"))
 
