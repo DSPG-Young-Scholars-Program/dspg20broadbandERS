@@ -81,21 +81,27 @@ sum(is.na(fairfax_housing_2018_geo$LATITUDE))
 
 ```
 
-## Table for completeness of Variables
+
+Table for completeness of Variables
 
 ```{r}
 #completeness of variables
 check_complete(first_six) %>% knitr::kable()
 ```
 
-## General exploration of the first 6 variables
+
+
+General exploration of the first 6 variables
+
 ```{r}
 #General exploration of the variables
 plot_intro(first_six)
 ```
 
 
-## Distribution of Housing Type Variable
+
+Distribution of Housing Type Variable
+
 ```{r}
 #distribution of types of housing units
 housing_dist_plot <- ggplot(first_six, aes(x=HOUSING_TYPE, fill=HOUSING_TYPE)) +
@@ -111,21 +117,26 @@ housing_dist_plot <- ggplot(first_six, aes(x=HOUSING_TYPE, fill=HOUSING_TYPE)) +
 housing_dist_plot
 ```
 
-## Distribution of the year houses were built in
+
+Distribution of the year houses were built in
 
 ```{r} 
 #distribution of the year houses were built in
 plot_histogram(first_six$YEAR_BUILT)
 ```
 
-## Distribution of the number of units
+
+Distribution of the number of units
+
 ```{r}
 #number of units distribution
 #returns strange results
 plot_histogram(first_six$NUM_UNITS)
 
 ```
-## Number of units built per year
+
+
+Number of units built per year
 
 ```{r}
 #scatterplot form of the same
