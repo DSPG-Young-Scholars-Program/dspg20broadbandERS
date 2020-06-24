@@ -1,0 +1,187 @@
+---
+title: "CoreLogic ffx"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE, message=FALSE, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, warning = FALSE)
+# install.packages("dplyr")
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(sf)  
+library(venn)
+library(ggthemes)
+library(DataExplorer)
+library(maditr)
+```
+
+```{r include=FALSE}
+# read in the CoreLogic data
+
+# set up environmental vars (DON'T push actual values to github)
+Sys.setenv(db_usr = "vr5pf")
+Sys.setenv(db_pwd = "vr5pf")
+
+get_db_conn <-
+  function(db_name = "sdad",
+           db_host = "postgis1",
+           db_port = "5432",
+           db_user = Sys.getenv("db_usr"), # requires you to setup environmental vars (above)
+           db_pass = Sys.getenv("db_pwd")) {
+    RPostgreSQL::dbConnect(
+      drv = RPostgreSQL::PostgreSQL(),
+      dbname = db_name,
+      host = db_host,
+      port = db_port,
+      user = db_user,
+      password = db_pass
+    )
+  }
+
+list_db_schemas <- function(db_con) {
+  result <- DBI::dbGetQuery(db_con, "select schema_name from information_schema.schemata")
+  DBI::dbDisconnect(db_con)
+  return(result)
+}
+
+list_schema_tables <- function(db_con, db_schema) {
+  result <- DBI::dbGetQuery(db_con, paste0("SELECT table_name FROM information_schema.tables
+                                           WHERE table_schema='", db_schema, "'"))
+  DBI::dbDisconnect(db_con)
+  return(result)
+}
+
+list_table_columns <- function(db_con, db_schema, db_table) {
+  result <- DBI::dbGetQuery(db_con, paste0("SELECT table_schema, table_name, column_name, data_type
+                                           FROM information_schema.columns
+                                           WHERE table_schema = '", db_schema, "'",
+                                           " AND table_name = '", db_table, "'"))
+  DBI::dbDisconnect(db_con)
+  return(result)
+}
+
+# EXAMPLES ----
+# List Schemas
+con <- get_db_conn()
+list_db_schemas(con)
+# you should see CoreLogic data in this list
+
+# List Tables in a Schema
+con <- get_db_conn()
+list_schema_tables(con, "corelogic_prop_tax_2003_2019")
+
+# List Columns in a Table
+con <- get_db_conn()
+list_table_columns(con, "corelogic_prop_tax_2003_2019", "va_pl_prop_tax")
+
+# Get Some Data
+con <- get_db_conn()
+va_subset <- DBI::dbGetQuery(con, 'SELECT * FROM corelogic_prop_tax_2003_2019.va_pl_prop_tax LIMIT 200')
+class(va_subset$fips_code)
+
+# look at variable names
+names(va_subset)
+
+con <- get_db_conn()
+
+ffx <- DBI::dbGetQuery(con, statement = paste(
+  "SELECT fips_code, unformatted_apn, formatted_apn, census_tract, lot_number, township, property_indicator, assd_total_value, mkt_total_value, tax_amount, tax_year, assessed_year, acres, land_square_footage, building__square_feet, living_square_feet, year_built, effective_year_built, bedrooms, total_baths, full_baths, half_baths",
+  "FROM corelogic_prop_tax_2003_2019.va_pl_prop_tax",
+  "WHERE fips_code='51059'"))
+
+#DBI::dbDisconnect(con)
+``` 
+
+```{r include=FALSE}
+ffx_1 <- ffx[1:8]
+
+ffx_1 <- dt_mutate(ffx_1, assd_total_value = as.numeric(assd_total_value), mkt_total_value = as.numeric(mkt_total_value))
+
+```
+
+
+```{r functions, include=FALSE}
+
+check_calc <- function(vec) {
+  blanks <- 0L
+  true_na <- 0L
+  written_na <- 0L
+  len <- length(x = vec)
+  for (elem in vec) {
+    if (is.na(x = elem)) {
+      true_na <- true_na + 1L
+    } else if (elem == "na") {
+      written_na <- written_na + 1L
+    } else if (elem == "") {
+      blanks <- blanks + 1L
+    }
+  }
+  percent_complete <- (len - (blanks + true_na + written_na)) / len
+  unique_values <- length(unique(vec))
+  tibble(blanks = blanks,
+         true_na = true_na,
+         written_na = written_na,
+         percent_complete = percent_complete,
+         unique_values = unique_values)
+}
+check_complete <- function(df) {
+  z <- deparse(substitute(df))
+  map_df(.x = df, .f = check_calc) %>%
+    mutate(column = colnames(df)) %>%
+    mutate(set = print(z))  %>%
+    select(set, column, blanks, true_na, written_na, percent_complete, unique_values)
+}
+```
+
+
+**completeness of variables**
+1) fips_code, unformatted_apn, formatted_apn are complete.
+2) census_tract, lot_number, property_indicator, ass_total_value are between 95.5% and 99.3% complete.
+3) township is fully incomplete; 0% complete.
+
+```{r}
+#completeness of variables
+check_complete(ffx_1) %>% knitr::kable()
+```
+
+```{r}
+plot_intro(ffx_1)
+```
+
+```{r}
+plot_missing(ffx_1)
+```
+
+**Distribution of property_indicators/ property types**
+Most properties are single family residences (10) with the next most popular property type being condominiums (11) and vacant (80). There are no miscellaneous properties (00).
+
+```{r}
+prop_indicator_dist_plot <- ggplot(ffx_1, aes(x=property_indicator, fill=property_indicator)) +
+  geom_bar(position="stack") 
+prop_indicator_dist_plot
+```
+
+**Distribution of assd_total_value for the different property types**
+Single family homes have the greatest range in assessed total value, followed by condos and vacant properties (among the three most populace property types).
+```{r}
+dist <- (ffx_1) %>%
+  filter(!is.na(assd_total_value)) %>% 
+  filter(property_indicator == c("10", "11", "80")) %>%
+  ggplot(aes(x= assd_total_value, y=property_indicator)) + geom_point() 
+
+dist 
+```
+
+Assd and Mkt values are the same throughout
+```{r include= FALSE}
+ffx_1 %>%
+  filter(!is.na(assd_total_value))%>%
+  filter(!is.na(mkt_total_value)) %>%
+  mutate(diff = assd_total_value - mkt_total_value) 
+ffx_1 <- ffx_1[!grepl("0", ffx_1$diff)]
+```
