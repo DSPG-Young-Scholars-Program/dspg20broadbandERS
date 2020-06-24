@@ -1,0 +1,116 @@
+---
+title: "CoreLogic Fairfax Profiling"
+author: "Morgan Klutzke"
+date: "6/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE, message=FALSE, echo=FALSE}
+library(DataExplorer)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(purrr)
+library(data.table)
+library(maditr)
+```
+
+```{r functions}
+check_calc <- function(vec) {
+  blanks <- 0L
+  true_na <- 0L
+  written_na <- 0L
+  len <- length(x = vec)
+  for (elem in vec) {
+    if (is.na(x = elem)) {
+      true_na <- true_na + 1L
+    } else if (elem == "na") {
+      written_na <- written_na + 1L
+    } else if (elem == "") {
+      blanks <- blanks + 1L
+    }
+  }
+  percent_complete <- (len - (blanks + true_na + written_na)) / len
+  unique_values <- length(unique(vec))
+  tibble(blanks = blanks,
+         true_na = true_na,
+         written_na = written_na,
+         percent_complete = percent_complete,
+         unique_values = unique_values)
+}
+check_complete <- function(df) {
+  z <- deparse(substitute(df))
+  map_df(.x = df, .f = check_calc) %>%
+    mutate(column = colnames(df)) %>%
+    mutate(set = print(z))  %>%
+    select(set, column, blanks, true_na, written_na, percent_complete, unique_values)
+}
+```
+
+Checking completeness
+
+```{r}
+check_complete(select(ffx, 9:15)) %>% knitr::kable()
+```
+
+```{r}
+introduce(select(ffx, 9:15))
+plot_missing(select(ffx, 9:15))
+```
+
+Looking at market value:
+
+
+```{r}
+market <- as.numeric(na.omit(ffx$mkt_total_value))
+range(market)
+
+# Lower 98%
+market_sort <- sort(data.matrix(market))
+upper <- length(market_sort) - 2 * (length(market_sort) %/% 100)
+market_lower <- market_sort[0:upper]
+range(market_lower)
+lower_hist <- hist(market_lower)
+text(lower_hist$mids, lower_hist$counts, labels = lower_hist$counts, adj = c(0.5, -0.1))
+
+# Upper 2%
+options(scipen = 15)
+market_upper <- market_sort[upper:length(market_sort)]
+range(market_upper)
+h <- hist(market_upper)
+text(h$mids, h$counts, labels = h$counts, adj = c(0.5, -0.1))
+```
+
+Looking at tax amount:
+
+```{r}
+taxes <- as.numeric(na.omit(ffx$tax_amount))
+range(taxes)
+
+# Lower 98%
+taxes_sort <- sort(data.matrix(taxes))
+upper <- length(taxes_sort) - 2 * (length(taxes_sort) %/% 100)
+taxes_lower <- taxes_sort[0:upper]
+range(taxes_lower)
+hist(taxes_lower)
+
+# Upper 2%
+taxes_upper <- taxes_sort[upper:length(taxes_sort)]
+range(taxes_upper)
+h <- hist(taxes_upper)
+text(h$mids, h$counts, labels = h$counts, adj = c(0.5, -0.1))
+```
+
+Looking at tax year:
+
+```{r}
+tax_year <- as.numeric(na.omit(ffx$tax_year))
+range(tax_year)
+
+#plot(tax_year)
+```
+
