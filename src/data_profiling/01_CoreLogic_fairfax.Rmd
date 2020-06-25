@@ -100,7 +100,7 @@ ffx <- DBI::dbGetQuery(con, statement = paste(
 ```{r include=FALSE}
 ffx_1 <- ffx[1:8]
 
-ffx_1 <- dt_mutate(ffx_1, assd_total_value = as.numeric(assd_total_value), mkt_total_value = as.numeric(mkt_total_value))
+ffx_1 <- dt_mutate(ffx_1, assd_total_value = as.numeric(assd_total_value))
 
 ```
 
@@ -167,12 +167,25 @@ prop_indicator_dist_plot
 ```
 
 **Distribution of assd_total_value for the different property types**
-Single family homes have the greatest range in assessed total value, followed by condos and vacant properties (among the three most populace property types).
+Single family homes have the greatest range in assessed total value, followed by condos and vacant properties (among the three most common property types).
 ```{r}
 dist <- (ffx_1) %>%
   filter(!is.na(assd_total_value)) %>% 
   filter(property_indicator == c("10", "11", "80")) %>%
+  group_by(property_indicator) %>%
   ggplot(aes(x= assd_total_value, y=property_indicator)) + geom_point() 
+
+dist 
+```
+
+Average assessed total value for the three most common property types.
+```{r}
+dist <- (ffx_1) %>%
+  filter(!is.na(assd_total_value)) %>% 
+  filter(property_indicator == c("10", "11", "80")) %>%
+  group_by(property_indicator) %>%
+  summarise(mean = mean(assd_total_value)) %>%
+  ggplot(aes(x= mean, y=property_indicator)) + geom_point() 
 
 dist 
 ```
@@ -185,3 +198,5 @@ ffx_1 %>%
   mutate(diff = assd_total_value - mkt_total_value) 
 ffx_1 <- ffx_1[!grepl("0", ffx_1$diff)]
 ```
+
+
