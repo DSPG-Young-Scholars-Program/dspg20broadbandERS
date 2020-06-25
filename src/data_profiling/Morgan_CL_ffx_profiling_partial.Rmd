@@ -49,6 +49,28 @@ check_complete <- function(df) {
     mutate(set = print(z))  %>%
     select(set, column, blanks, true_na, written_na, percent_complete, unique_values)
 }
+
+draw_histograms <- function(variable) {
+  # For plotting data that are heavily skewed right
+  # Plots using two histograms so R doesn't freak out
+  data <- as.numeric(na.omit(variable))
+  print(range(data))
+  
+  # Lower 98%
+  data_sort <- sort(data.matrix(data))
+  upper <- length(data_sort) - 2 * (length(data_sort) %/% 100)
+  data_lower <- data_sort[0:upper]
+  range(data_lower)
+  lower_hist <- hist(data_lower)
+  #text(lower_hist$mids, lower_hist$counts, labels = lower_hist$counts, adj = c(0.5, -0.1))
+  
+  # Upper 2%
+  options(scipen = 15)
+  data_upper <- data_sort[upper:length(data_sort)]
+  range(data_upper)
+  upper_hist <- hist(data_upper)
+  text(upper_hist$mids, upper_hist$counts, labels = upper_hist$counts, adj = c(0.5, -0.1))
+}
 ```
 
 Checking completeness
@@ -62,55 +84,49 @@ introduce(select(ffx, 9:15))
 plot_missing(select(ffx, 9:15))
 ```
 
-Looking at market value:
-
-
-```{r}
-market <- as.numeric(na.omit(ffx$mkt_total_value))
-range(market)
-
-# Lower 98%
-market_sort <- sort(data.matrix(market))
-upper <- length(market_sort) - 2 * (length(market_sort) %/% 100)
-market_lower <- market_sort[0:upper]
-range(market_lower)
-lower_hist <- hist(market_lower)
-text(lower_hist$mids, lower_hist$counts, labels = lower_hist$counts, adj = c(0.5, -0.1))
-
-# Upper 2%
-options(scipen = 15)
-market_upper <- market_sort[upper:length(market_sort)]
-range(market_upper)
-h <- hist(market_upper)
-text(h$mids, h$counts, labels = h$counts, adj = c(0.5, -0.1))
-```
-
-Looking at tax amount:
+Looking at market value: "The Total Market Value of the Parcel's Land & Improvement values as provided by the county or local taxing/assessment authority"
 
 ```{r}
-taxes <- as.numeric(na.omit(ffx$tax_amount))
-range(taxes)
-
-# Lower 98%
-taxes_sort <- sort(data.matrix(taxes))
-upper <- length(taxes_sort) - 2 * (length(taxes_sort) %/% 100)
-taxes_lower <- taxes_sort[0:upper]
-range(taxes_lower)
-hist(taxes_lower)
-
-# Upper 2%
-taxes_upper <- taxes_sort[upper:length(taxes_sort)]
-range(taxes_upper)
-h <- hist(taxes_upper)
-text(h$mids, h$counts, labels = h$counts, adj = c(0.5, -0.1))
+draw_histograms(ffx$mkt_total_value)
 ```
 
-Looking at tax year:
+Looking at tax amount: "The Total Tax amount provided by the county or local taxing/assessment authority"
+
+```{r}
+draw_histograms(ffx$tax_amount)
+```
+
+Looking at tax_year: "The tax year for which the taxes were billed" 
+& assessed_year: "The assessment year for which the taxes were billed" 
+(orange is tax_year, blue is assessed_year)
 
 ```{r}
 tax_year <- as.numeric(na.omit(ffx$tax_year))
-range(tax_year)
+tax_year_counts <- as.data.frame(table(tax_year))
 
-#plot(tax_year)
+assessed_year <- as.numeric(na.omit(ffx$assessed_year))
+assessed_year_counts <- as.data.frame(table(assessed_year))
+
+years <- data.frame("year" = tax_year_counts$tax_year, "tax_year" = tax_year_counts$Freq, "assessed_year" = assessed_year_counts$Freq)
+ 
+ggplot(years, aes(x = year)) + geom_line(mapping = aes(y = tax_year, group = 1), color = "#E69F00") + geom_line(mapping = aes(y = assessed_year, group = 1), color = "#56B4E9") + ylab("frequency")
+```
+
+Looking at acres: "CoreLogic derived or county provided value that indicates the total acreage of the parcel"
+
+```{r}
+draw_histograms(ffx$acres)
+```
+
+Looking at land_square_footage: "Total land mass in square feet"
+
+```{r}
+draw_histograms(ffx$land_square_footage)
+```
+
+Looking at building__square_feet: "The size of the building in square feet. This field is most commonly populated as an aggregate total when a county does not differentiate between living and non-living areas"
+
+```{r}
+draw_histograms(ffx$building__square_feet)
 ```
 
