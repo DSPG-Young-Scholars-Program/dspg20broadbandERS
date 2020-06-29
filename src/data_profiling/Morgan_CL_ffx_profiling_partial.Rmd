@@ -101,6 +101,14 @@ Looking at tax_year: "The tax year for which the taxes were billed"
 (orange is tax_year, blue is assessed_year)
 
 ```{r}
+ffx <- ffx %>%
+  dt_mutate(tax_year = as.numeric(tax_year)) %>%
+  dt_mutate(assessed_year = as.numeric(assessed_year))
+ffx <- dt_mutate(ffx, year_diff = ifelse(test = tax_year & assessed_year, yes = tax_year - assessed_year, no = NA_integer_))
+unique(ffx$year_diff)
+```
+
+```{r}
 tax_year <- as.numeric(na.omit(ffx$tax_year))
 tax_year_counts <- as.data.frame(table(tax_year))
 
@@ -111,6 +119,7 @@ years <- data.frame("year" = tax_year_counts$tax_year, "tax_year" = tax_year_cou
  
 ggplot(years, aes(x = year)) + geom_line(mapping = aes(y = tax_year, group = 1), color = "#E69F00") + geom_line(mapping = aes(y = assessed_year, group = 1), color = "#56B4E9") + ylab("frequency")
 ```
+
 
 Looking at acres: "CoreLogic derived or county provided value that indicates the total acreage of the parcel"
 
