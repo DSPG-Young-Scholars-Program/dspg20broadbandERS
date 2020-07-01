@@ -75,3 +75,14 @@ ffx_allyears <- DBI::dbGetQuery(con, statement = paste(
   "WHERE fips_code='51059'"))
 
 DBI::dbDisconnect(con)
+
+#check if the assessed_year and the tax_year columns are identical
+identical(ffx_allyears[[13]],ffx_allyears[[14]])
+
+#hooray! they are (**IN THIS CASE FOR FAIRFAX** - need to check if applying other counties)
+
+colnames(ffx_allyears)
+sapply(ffx_allyears, class)
+
+#filter by 2018
+ffx_2018 <- ffx_allyears[ffx_allyears$tax_year == '2018',]
