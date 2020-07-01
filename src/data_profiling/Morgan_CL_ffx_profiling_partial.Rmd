@@ -106,6 +106,8 @@ ffx <- ffx %>%
   dt_mutate(assessed_year = as.numeric(assessed_year))
 ffx <- dt_mutate(ffx, year_diff = ifelse(test = tax_year & assessed_year, yes = tax_year - assessed_year, no = NA_integer_))
 unique(ffx$year_diff)
+unique(ffx$tax_year)
+unique(ffx$assessed_year)
 ```
 
 ```{r}
