@@ -60,6 +60,7 @@ introduce(select(new_kent, 53:56))
 plot_missing(select(new_kent, 53:56))
 ```
 ```{r}
+options(scipen = 10)
 grid.arrange(ggplot(new_kent, aes(x = `Land Area (Acres)`)) + geom_histogram() + scale_x_log10(), 
              ggplot(new_kent, aes(x = `Building Area (Effective)`)) + geom_histogram() + scale_x_log10(), 
              ggplot(new_kent, aes(x = `Building Area (Gross)`)) + geom_histogram() + scale_x_log10(), 
