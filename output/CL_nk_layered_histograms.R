@@ -8,7 +8,7 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 library(maditr)
-library(extrafont)
+library(scales)
 
 # first load corelogic stuff for new kent as nk_2018
 # now load data from new kent
@@ -21,10 +21,10 @@ nk_property_values <- add_row(nk_property_values, total_value = as.numeric(na.om
 # plot histograms
 options(scipen = 10)
 ggplot(nk_property_values, aes(x = total_value)) +
-  geom_histogram(data = subset(nk_property_values, data_source == "corelogic"), aes(fill = "CoreLogic"), alpha = 0.6) +
-  geom_histogram(data = subset(nk_property_values, data_source == "new_kent"), aes(fill = "New Kent"), alpha = 0.5) +
+  geom_histogram(data = subset(nk_property_values, data_source == "new_kent"), aes(fill = "New Kent"), alpha = 0.6) +
+  geom_histogram(data = subset(nk_property_values, data_source == "corelogic"), aes(fill = "CoreLogic"), alpha = 0.5) +
   theme_classic() +
-  scale_fill_manual(values = c("CoreLogic" = "red", "New Kent" = "blue")) +
-  scale_x_log10() +
-  scale_y_log10() +
-  labs(x = "Property Value", y = "Frequency", title = "Property Values in New Kent County", fill = "Data Source")
+  scale_fill_manual(values = c("CoreLogic" = "blue", "New Kent" = "red")) +
+  scale_x_log10(label = comma) +
+  scale_y_log10(label = comma) +
+  labs(x = "Property Value", y = "Frequency", title = "Property Values in New Kent County", fill = "Dataset")
