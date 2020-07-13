@@ -1,0 +1,106 @@
+---
+title: "ACS test"
+author: "Morgan Klutzke"
+date: "7/13/2020"
+output: html_document
+---
+
+```{r packages}
+library(tidycensus)
+library(maps)
+library(data.table)
+library(magrittr)
+library(dplyr)
+library(stringr)
+```
+
+```{r}
+census_api_key("")
+v18 <- load_variables(2018, "acs5", cache = TRUE)
+```
+
+```{r}
+acs_vars <- c("B25075_001", "B25075_002", "B25075_003", "B25075_004", "B25075_005", "B25075_006", "B25075_007", "B25075_008", "B25075_009", "B25075_010", "B25075_011", "B25075_012", "B25075_013", "B25075_014", "B25075_015", "B25075_016", "B25075_017", "B25075_018", "B25075_019", "B25075_020", "B25075_021", "B25075_022", "B25075_023", "B25075_024", "B25075_025", "B25075_026", "B25075_027", # value
+              "B25077_001", # median value
+              "B25001_001", # housing units
+              "B25002_001", "B25002_002", "B25002_003",# occupancy status
+              "B25024_001", "B25024_002", "B25024_003", "B25024_004", "B25024_005", "B25024_006", "B25024_007", "B25024_008", "B25024_009", "B25024_010", "B25024_011", # number of units
+              "B25041_001", "B25041_002", "B25041_003", "B25041_004", "B25041_005", "B25041_006", "B25041_007", # number of bedrooms
+              "B25034_001", "B25034_002", "B25034_003", "B25034_004", "B25034_005", "B25034_006", "B25034_007", "B25034_008", "B25034_009", "B25034_010", "B25034_011", # year built
+              "B25035_001" # median year built
+)
+
+ffx <- get_acs(geography = "tract", state = 51, county = 059,
+               variables = acs_vars,
+               year = 2018, survey = "acs5",
+               cache_table = TRUE, output = "wide")
+
+ffx_estimates <- ffx %>% transmute(
+  GEOID = GEOID,
+  census_tract = str_extract(NAME, "(?<=Census Tract )[0-9.]*"),
+  median_value = B25077_001E,
+  value_total = B25075_001E,
+  value_10orless = B25075_002E,
+  value_10to15 = B25075_003E,
+  value_15to20 = B25075_004E,
+  value_20to25 = B25075_005E,
+  value_25to30 = B25075_006E,
+  value_30to35 = B25075_007E,
+  value_35to40 = B25075_008E,
+  value_40to50 = B25075_009E,
+  value_50to60 = B25075_010E,
+  value_60to70 = B25075_011E,
+  value_70to80 = B25075_012E,
+  value_80to90 = B25075_013E,
+  value_90to100 = B25075_014E,
+  value_100to125 = B25075_015E,
+  value_125to150 = B25075_016E,
+  value_150to175 = B25075_017E,
+  value_175to200 = B25075_018E,
+  value_200to250 = B25075_019E,
+  value_250to300 = B25075_020E,
+  value_300to400 = B25075_021E,
+  value_400to500 = B25075_022E,
+  value_500to750 = B25075_023E,
+  value_750to1000 = B25075_024E,
+  value_1000to1500 = B25075_025E,
+  value_1500to2000 = B25075_026E,
+  value_2000plus = B25075_027E,
+  median_yrbuilt = B25035_001E,
+  yrbuilt_total = B25034_001E,
+  yrbuilt_2014orlater = B25034_002E,
+  yrbuilt_2010to2013 = B25034_003E,
+  yrbuilt_2000to2009 = B25034_004E,
+  yrbuilt_1990to1999 = B25034_005E,
+  yrbuilt_1980to1989 = B25034_006E,
+  yrbuilt_1970to1979 = B25034_007E,
+  yrbuilt_1960to1969 = B25034_008E,
+  yrbuilt_1950to1959 = B25034_009E,
+  yrbuilt_1940to1949 = B25034_010E,
+  yrbuilt_1939orearlier = B25034_011E,
+  bed_total = B25041_001E,
+  bed_none = B25041_002E,
+  bed_1 = B25041_003E,
+  bed_2 = B25041_004E,
+  bed_3 = B25041_005E,
+  bed_4 = B25041_006E,
+  bed_5plus= B25041_007E,
+  hunits_total = B25001_001E,
+  occstatus_total = B25002_001E,
+  occstatus_occup = B25002_002E,
+  occstatus_vac = B25002_003E,
+  unitno_total = B25024_001E,
+  unitno_1det = B25024_002E,
+  unitno_1at = B25024_003E,
+  unitno_2 = B25024_004E,
+  unitno_3or4 = B25024_005E,
+  unitno_5to9 = B25024_006E,
+  unitno_10to19 = B25024_007E,
+  unitno_20to49 = B25024_008E,
+  unitno_50plus = B25024_009E,
+  unitno_mobile = B25024_010E,
+  unitno_other = B25024_011E
+)
+```
+
+
