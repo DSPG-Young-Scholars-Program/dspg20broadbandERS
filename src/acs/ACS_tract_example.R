@@ -1,9 +1,10 @@
 # function to call ACS demographic variables by Census Tract for a given year
 library(tidycensus)
 library(maps)
+library(data.table)
 
 # get your API key at https://api.census.gov/data/key_signup.html
-census_api_key("add_your_key_here")
+census_api_key("3ac2b3eb0dbd7e46af9a4ad90d6a6ac3e646fbc7")
 
 # continental + AK, HI state fips
 state_fips <- c( unique(state.fips$fips), 2, 15 )
