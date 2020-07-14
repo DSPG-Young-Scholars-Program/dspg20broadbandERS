@@ -1,0 +1,186 @@
+---
+title: "CoreLogic Fairfax Profile"
+output: html_document
+---
+
+```{r libraries, include=FALSE, message=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, warning = FALSE)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(sf)  
+# install.packages('venn')
+library(venn)
+# install.packages('ggthemes')
+library(ggthemes)
+# install.packages('DataExplorer')
+library(DataExplorer)
+library(maditr)
+```
+
+```{r functions}
+# functions to calculate completeness (from Devika)
+check_calc <- function(vec) {
+  blanks <- 0L
+  true_na <- 0L
+  written_na <- 0L
+  len <- length(x = vec)
+  for (elem in vec) {
+    if (is.na(x = elem)) {
+      true_na <- true_na + 1L
+    } else if (elem == "na") {
+      written_na <- written_na + 1L
+    } else if (elem == "") {
+      blanks <- blanks + 1L
+    }
+  }
+  percent_complete <- (len - (blanks + true_na + written_na)) / len
+  unique_values <- length(unique(vec))
+  tibble(blanks = blanks,
+         true_na = true_na,
+         written_na = written_na,
+         percent_complete = percent_complete,
+         unique_values = unique_values)
+}
+check_complete <- function(df) {
+  z <- deparse(substitute(df))
+  map_df(.x = df, .f = check_calc) %>%
+    mutate(column = colnames(df)) %>%
+    mutate(set = print(z))  %>%
+    select(set, column, blanks, true_na, written_na, percent_complete, unique_values)
+}
+```
+
+```{r}
+get_db_conn <-
+  function(db_name = "sdad",
+           db_host = "postgis1",
+           db_port = "5432",
+           db_user = Sys.getenv("db_usr"), # requires you to setup environmental vars (above)
+           db_pass = Sys.getenv("db_pwd")) {
+    RPostgreSQL::dbConnect(
+      drv = RPostgreSQL::PostgreSQL(),
+      dbname = db_name,
+      host = db_host,
+      port = db_port,
+      user = db_user,
+      password = db_pass
+    )
+  }
+
+con <- get_db_conn()
+
+ffx <- DBI::dbGetQuery(con, statement = paste(
+  "SELECT fips_code, apn__parcel_number_unformatted_, apn_sequence_number, original_apn, census_tract, legal_lot_number, township, municipality_code,
+  property_indicator_code, assessed_total_value, market_total_value, tax_amount, tax_year, assessed_year, 
+  acres, land_square_footage, building_square_feet, living_square_feet, year_built, effective_year_built, 
+  bedrooms, total_baths, full_baths, half_baths, parcel_level_latitude, parcel_level_longitude, block_level_latitude, block_level_longitude,
+  situs_house_number, situs_street_name, situs_mode, situs_city, situs_state, situs_zip_code",
+  "FROM corelogic_sdad.tax_hist_2_51",
+  "WHERE fips_code='51059'"))
+
+DBI::dbDisconnect(con)
+```
+
+
+
+```{r}
+ffx_subset <- select(ffx, 16:22)
+```
+
+```{r}
+#check completeness
+check_complete(ffx_subset)
+```
+
+```{r}
+introduce(ffx_subset)
+```
+
+```{r}
+plot_missing(ffx_subset)
+```
+
+
+
+```{r}
+plot_bar(ffx_subset)
+```
+
+
+```{r}
+ffx_sub_numeric <- mutate_all(ffx_subset, function(x) as.numeric(as.character(x)))
+sapply(ffx_sub_numeric, class)
+```
+
+```{r}
+ffx_sub_numeric %>%
+  ggplot(aes(year_built)) +
+  geom_histogram()
+```
+
+**completeness of variables**
+
+```{r}
+ffx_1 <- ffx[1:10]
+
+ffx_1 <- dt_mutate(ffx_1, assessed_total_value = as.numeric(assessed_total_value))
+```
+
+
+```{r}
+#completeness of variables
+check_complete(ffx_1) %>% knitr::kable()
+```
+
+```{r}
+plot_intro(ffx_1)
+```
+
+```{r}
+plot_missing(ffx_1)
+```
+
+**Distribution of property_indicators/ property types**
+Most properties are single family residences (10) with the next most popular property type being condominiums (11) and vacant (80). There are no miscellaneous properties (00).
+
+```{r}
+prop_indicator_dist_plot <- ggplot(ffx_1, aes(x=property_indicator_code, fill=property_indicator_code)) +
+  geom_bar(position="stack") 
+prop_indicator_dist_plot
+```
+
+**Distribution of assd_total_value for the different property types**
+Single family homes have the greatest range in assessed total value, followed by condos and vacant properties (among the three most common property types).
+```{r}
+dist <- (ffx_1) %>%
+  filter(!is.na(assessed_total_value)) %>% 
+  filter(property_indicator_code == c("10", "11", "80")) %>%
+  group_by(property_indicator_code) %>%
+  ggplot(aes(x= assessed_total_value, y=property_indicator_code)) + geom_point() 
+
+dist 
+```
+
+Average assessed total value for the three most common property types.
+```{r}
+dist <- (ffx_1) %>%
+  filter(!is.na(assessed_total_value)) %>% 
+  filter(property_indicator_code == c("10", "11", "80")) %>%
+  group_by(property_indicator_code) %>%
+  summarise(mean = mean(assessed_total_value)) %>%
+  ggplot(aes(x= mean, y=property_indicator_code)) + geom_point() 
+
+dist 
+```
+
+Assd and Mkt values are the same throughout
+```{r include= FALSE}
+# ffx_1 %>%
+#   filter(!is.na(assessed_total_value))%>%
+#   filter(!is.na(market_total_value)) %>%
+#   mutate(diff = assessed_total_value - market_total_value) 
+# ffx_1 <- ffx_1[!grepl("0", ffx_1$diff)]
+```
+
+
