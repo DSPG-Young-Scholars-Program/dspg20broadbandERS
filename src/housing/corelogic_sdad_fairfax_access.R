@@ -1,8 +1,8 @@
 # read in the CoreLogic data
 
 # set up environmental vars (DON'T push actual values to github)
-Sys.setenv(db_usr = "mcp5t")
-Sys.setenv(db_pwd = "mcp5t")
+Sys.setenv(db_usr = "your_user_name")
+Sys.setenv(db_pwd = "your_password")
 
 get_db_conn <-
   function(db_name = "sdad",
