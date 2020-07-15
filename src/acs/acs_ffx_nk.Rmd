@@ -122,4 +122,50 @@ nk <- get_acs(geography = "tract", state = 51, county = 127,
 nk_estimates <- get_estimates(nk)
 ```
 
+Visualizations
+
+```{r, fig.height=7}
+library(ggplot2)
+library(tidyr)
+
+ffx_values <- summarise(ffx_estimates, across(value_10orless:value_2000plus, sum)) %>%
+  pivot_longer(cols = 1:26 , names_to = "value", values_to = "count") %>%
+  mutate(value = str_replace_all(value, "value_", "")) %>%
+  mutate(value = str_replace_all(value, "to", "-")) %>%
+  mutate(value = str_replace_all(value, "10orless", "<10")) %>%
+  mutate(value = str_replace_all(value, "2000plus", "2000<")) %>%
+  mutate(value = factor(value, levels = value))
+
+ggplot(ffx_values) + geom_col(aes(x = value, y = count)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x = "value (thousands of $)", title = "Fairfax")
+
+nk_values <- summarise(nk_estimates, across(value_10orless:value_2000plus, sum)) %>%
+  pivot_longer(cols = 1:26 , names_to = "value", values_to = "count") %>%
+  mutate(value = str_replace_all(value, "value_", "")) %>%
+  mutate(value = str_replace_all(value, "to", "-")) %>%
+  mutate(value = str_replace_all(value, "10orless", "<10")) %>%
+  mutate(value = str_replace_all(value, "2000plus", "2000<")) %>%
+  mutate(value = factor(value, levels = value))
+
+ggplot(nk_values) + geom_col(aes(x = value, y = count)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x = "value (thousands of $)", title = "New Kent")
+```
+
+```{r, fig.height=7}
+ffx_yrbuilt <- summarise(ffx_estimates, across(yrbuilt_2014orlater:yrbuilt_1939orearlier, sum)) %>%
+  pivot_longer(cols = 1:10 , names_to = "yrbuilt", values_to = "count") %>%
+  mutate(yrbuilt = str_replace_all(yrbuilt, "yrbuilt_", "")) %>%
+  mutate(yrbuilt = str_replace_all(yrbuilt, "to|or", "-")) %>%
+  mutate(yrbuilt = str_replace(yrbuilt, "1939-earlier", "earlier-1939")) %>%
+  mutate(yrbuilt = factor(yrbuilt, levels = yrbuilt))
+
+ggplot(ffx_yrbuilt) + geom_col(aes(x = yrbuilt, y = count)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x = "year built", title = "Fairfax")
+
+nk_yrbuilt <- summarise(nk_estimates, across(yrbuilt_2014orlater:yrbuilt_1939orearlier, sum)) %>%
+  pivot_longer(cols = 1:10 , names_to = "yrbuilt", values_to = "count") %>%
+  mutate(yrbuilt = str_replace_all(yrbuilt, "yrbuilt_", "")) %>%
+  mutate(yrbuilt = str_replace_all(yrbuilt, "to|or", "-")) %>%
+  mutate(yrbuilt = str_replace(yrbuilt, "1939-earlier", "earlier-1939")) %>%
+  mutate(yrbuilt = factor(yrbuilt, levels = yrbuilt))
+
+ggplot(nk_yrbuilt) + geom_col(aes(x = yrbuilt, y = count)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x = "year built", title = "New Kent")
+```
 
