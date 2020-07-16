@@ -115,18 +115,11 @@ nk_latlon_na <- filter(nk_2018, is.na(parcel_level_latitude) | is.na(parcel_leve
 
 nk_2018 %>% distinct()
 
-nk_geo_census <- tidygeocoder::geocode(nk_latlon_na, addr, method = "census")
+nk_cl_geo_census <- tidygeocoder::geocode(nk_latlon_na, addr, method = "census")
 
-# ffx_geo_census_na <- filter(ffx_geo_census, is.na(lat) | is.na(long))
-# 
-# ffx_geo_census_false_na <- filter(ffx_geo_census, (grepl("NA ", addr)) & (is.na(lat) & is.na(long)))
-# 
-# ffx_geo_census_true_na <- filter(ffx_geo_census, !(grepl("NA ", addr)) & (is.na(lat) & is.na(long)))
-# 
-# ffx_geo_osm <- tidygeocoder::geocode(ffx_geo_census_true_na, addr, method = "osm")
+table(is.na(nk_cl_geo_census$lat))
+table(is.na(nk_cl_geo_census$long))
 
-
-table(is.na(nk_geo_census$lat))
 
 ```
  
