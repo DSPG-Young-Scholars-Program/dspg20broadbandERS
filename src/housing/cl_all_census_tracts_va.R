@@ -61,6 +61,8 @@ va_census <- read_csv('~/git/dspg20broadbandERS/data/census-geographies/virginia
 
 # list of census tracts in virginia
 va_tracts <- unique(va_census$tract)
+
+
 #sampletracts <- va_tracts[1:3]
 
 # function to save RDS object for each county
@@ -77,3 +79,11 @@ for(i in 1:length(va_tracts)){
   filename <- paste0('~/git/dspg20broadbandERS/data/virginia-corelogic/', va_tracts[i])
   saveRDS(temp, file = filename)
 }
+
+va_2018_grouped <- va_2018 %>% 
+  group_by(census_tract) %>%
+  tally()
+
+cltracts <- unique(va_2018_grouped$census_tract)
+
+va_tracts_df <- as.data.frame(va_tracts)

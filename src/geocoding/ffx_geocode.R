@@ -34,7 +34,7 @@ ffx_2018 %>% distinct()
 
 ffx_geo_census <- tidygeocoder::geocode(ffx_latlon_na, addr, method = "census")
 
-# ffx_geo_census_na <- filter(ffx_geo_census, is.na(lat) | is.na(long))
+#ffx_geo_census_na <- filter(ffx_geo_census, is.na(lat) | is.na(long))
 # 
 # ffx_geo_census_false_na <- filter(ffx_geo_census, (grepl("NA ", addr)) & (is.na(lat) & is.na(long)))
 # 
