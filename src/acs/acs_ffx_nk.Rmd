@@ -14,6 +14,7 @@ library(maditr)
 library(dplyr)
 library(stringr)
 library(ggplot2)
+library(tigris)
 
 # API key here
 census_api_key(Sys.getenv("CENSUS_API_KEY"))
@@ -169,6 +170,48 @@ ggplot(ffx_yrbuilt) + geom_col(aes(x = value, y = n)) + geom_errorbar(aes(x = va
 Get corelogic data
 
 ```{r}
+get_db_conn <-
+  function(db_name = "sdad",
+           db_host = "postgis1",
+           db_port = "5432",
+           db_user = Sys.getenv("db_usr"), # requires you to setup environmental vars
+           db_pass = Sys.getenv("db_pwd")) {
+    RPostgreSQL::dbConnect(
+      drv = RPostgreSQL::PostgreSQL(),
+      dbname = db_name,
+      host = db_host,
+      port = db_port,
+      user = db_user,
+      password = db_pass
+    )
+  }
+
+con <- get_db_conn()
+
+# get corelogic data for new kent county (tax_year is 2018 for all of new kent in this data, and assessed_total_value is always the same as market_total_value)
+cl_nk <- DBI::dbGetQuery(con, statement = paste(
+  "SELECT census_tract, assessed_total_value, year_built",
+  "FROM corelogic_sdad.tax_hist_2_51",
+  "WHERE fips_code='51127'"))
+
+DBI::dbDisconnect(con)
+
+# only VA FIPS
+va_tracts <- tracts(state = '51', year = 2018) %>% as.data.frame()
+
+# get regex of all census tract codes
+regex_census_tract <- paste0(va_tracts$TRACTCE, collapse = "|")
+
+cl_nk<- cl_nk %>% 
+  mutate(ct_detect = str_extract_all(census_tract, pattern = regex_census_tract)) %>%
+  mutate(ct_detect = as.character(ct_detect))
+
+#323 observations are missing census tracts in new kent
+sum(is.na(cl_nk$ct_detect))
+```
+
+
+```{r}
 # at first has 375,410 observations
 
 #filter(ffx_2018, assessed_total_value != market_total_value)
@@ -237,9 +280,5 @@ cl_ffx_values <- ffx_2018 %>%
   arrange(value)
 
 ggplot(cl_ffx_values) + geom_col(aes(x = value, y = n)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(x = "value (thousands of $)", title = "Fairfax (CoreLogic)")
-```
-
-```{r}
-left
 ```
 
