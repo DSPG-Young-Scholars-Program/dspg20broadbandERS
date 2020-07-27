@@ -186,5 +186,6 @@ va_2018_cl_collapsed <- va_2018_cl_categories %>%
 # wide to long
 va_2018_cl_mergeable <- va_2018_cl_collapsed %>%
   gather(key = 'cl_tract', value = 'cl_value', 2:50)
-         
+
+
                         
