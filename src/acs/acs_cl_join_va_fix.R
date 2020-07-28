@@ -86,7 +86,8 @@ census_api_key("853b2a1e71aa0aff0f3db966545e8898c73f0772")
 acs_vars <- c("B25075_001", "B25075_002", "B25075_003", "B25075_004", "B25075_005", "B25075_006", "B25075_007", "B25075_008", "B25075_009", "B25075_010", "B25075_011", "B25075_012", "B25075_013", "B25075_014", "B25075_015", "B25075_016", "B25075_017", "B25075_018", "B25075_019", "B25075_020", "B25075_021", "B25075_022", "B25075_023", "B25075_024", "B25075_025", "B25075_026", "B25075_027", # value
               "B25077_001", # median value
               "B25001_001", # housing units
-              #"B25002_001", "B25002_002", "B25002_003",# occupancy status
+              #"B25002_001", #occ status total
+              "B25002_002", "B25002_003",# occupancy status
               #"B25024_001", "B25024_002", "B25024_003", "B25024_004", "B25024_005", "B25024_006", "B25024_007", "B25024_008", "B25024_009", "B25024_010", "B25024_011", # number of units
               #"B25041_001", "B25041_002", "B25041_003", "B25041_004", "B25041_005", "B25041_006", "B25041_007", # number of bedrooms
               "B25034_001", "B25034_002", "B25034_003", "B25034_004", "B25034_005", "B25034_006", "B25034_007", "B25034_008", "B25034_009", "B25034_010", "B25034_011", # year built
@@ -150,8 +151,82 @@ get_estimates_tidy <- function(acs_data) {
     #dt_mutate(variable = str_replace(variable, "B25041_007", "bedrooms 5+")) %>%
     dt_mutate(variable = str_replace(variable, "B25001_001", "housing_units total")) %>%
     #dt_mutate(variable = str_replace(variable, "B25002_001", "occupancy_status total")) %>%
-    #dt_mutate(variable = str_replace(variable, "B25002_002", "occupancy_status occupied")) %>%
-    #dt_mutate(variable = str_replace(variable, "B25002_003", "occupancy_status vacant")) %>%
+    dt_mutate(variable = str_replace(variable, "B25002_002", "occupancy_status occupied")) %>%
+    dt_mutate(variable = str_replace(variable, "B25002_003", "occupancy_status vacant")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_001", "unit_no total")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_002", "unit_no 1 detached")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_003", "unit_no 1 attached")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_004", "unit_no 2")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_005", "unit_no 3-4")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_006", "unit_no 5-9")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_007", "unit_no 10-19")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25024_008", "unit_no 20-49")) %>%
+  #dt_mutate(variable = str_replace(variable, "B25024_009", "unit_no 50+")) %>%
+  #dt_mutate(variable = str_replace(variable, "B25024_010", "unit_no mobile")) %>%
+  #dt_mutate(variable = str_replace(variable, "B25024_011", "unit_no other")) %>%
+  dt_mutate(value = str_extract(variable, "(?<=\\s).+")) %>%
+    dt_mutate(variable = str_extract(variable, "[a-z_]+")) %>%
+    setcolorder(c("GEOID", "census_tract", "variable", "value", "estimate", "moe")) %>%
+    dt_mutate(lower_ci = estimate - moe) %>%
+    dt_mutate(upper_ci = estimate + moe) %>%
+    dt_mutate(lower_ci = if_else(condition = lower_ci < 0, true = 0, false = lower_ci))
+}
+
+get_estimates_tidy2 <- function(acs_data) {
+  acs_data <- as.data.table(acs_data) %>%
+    dt_mutate(NAME = str_extract(NAME, "(?<=Census Tract )[0-9.]*")) %>%
+    rename(census_tract = NAME) %>%
+    dt_mutate(variable = str_replace(variable, "B25077_001", "value median")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_001", "value total")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_002", "value less10")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_003", "value 10.15")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_004", "value 15.20")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_005", "value 20.25")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_006", "value 25.30")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_007", "value 30.35")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_008", "value 35.40")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_009", "value 40.50")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_010", "value 50.60")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_011", "value 60.70")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_012", "value 70.80")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_013", "value 80.90")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_014", "value 90.100")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_015", "value 100.125")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_016", "value 125.150")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_017", "value 150.175")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_018", "value 175.200")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_019", "value 200.250")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_020", "value 250.300")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_021", "value 300.400")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_022", "value 400.500")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_023", "value 500.750")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_024", "value 750.1000")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_025", "value 1000.1500")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_026", "value 1500.2000")) %>%
+    dt_mutate(variable = str_replace(variable, "B25075_027", "value 2000plus")) %>%
+    dt_mutate(variable = str_replace(variable, "B25035_001", "yrbuilt median")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_001", "yrbuilt total")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_002", "yrbuilt 2014.plus")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_003", "yrbuilt 2010.2013")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_004", "yrbuilt 2000.2009")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_005", "yrbuilt 1990.1999")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_006", "yrbuilt 1980.1989")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_007", "yrbuilt 1970.1979")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_008", "yrbuilt 1960.1969")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_009", "yrbuilt 1950.1959")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_010", "yrbuilt 1940.1949")) %>%
+    dt_mutate(variable = str_replace(variable, "B25034_011", "yrbuilt earlier.1939")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25041_001", "bedrooms total")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25041_002", "bedrooms none")) %>%
+    dt_mutate(variable = str_replace(variable, "B25041_003", "bedrooms 1")) %>%
+    dt_mutate(variable = str_replace(variable, "B25041_004", "bedrooms 2")) %>%
+    dt_mutate(variable = str_replace(variable, "B25041_005", "bedrooms 3")) %>%
+    dt_mutate(variable = str_replace(variable, "B25041_006", "bedrooms 4")) %>%
+    dt_mutate(variable = str_replace(variable, "B25041_007", "bedrooms 5plus")) %>%
+    dt_mutate(variable = str_replace(variable, "B25001_001", "housing_units total")) %>%
+    #dt_mutate(variable = str_replace(variable, "B25002_001", "occupancy_status total")) %>%
+    dt_mutate(variable = str_replace(variable, "B25002_002", "occupancy_status occupied")) %>%
+    dt_mutate(variable = str_replace(variable, "B25002_003", "occupancy_status vacant")) %>%
     #dt_mutate(variable = str_replace(variable, "B25024_001", "unit_no total")) %>%
     #dt_mutate(variable = str_replace(variable, "B25024_002", "unit_no 1 detached")) %>%
     #dt_mutate(variable = str_replace(variable, "B25024_003", "unit_no 1 attached")) %>%
@@ -177,7 +252,7 @@ va_acs <- get_acs(geography = "tract", state = 51,
                   year = 2018, survey = "acs5",
                   cache_table = TRUE)
 
-va_acs_estimates <- get_estimates_tidy(va_acs)
+va_acs_estimates <- get_estimates_tidy2(va_acs)
 
 # smush together a column, extract the 6 digit census tract code
 va_acs_estimates <- va_acs_estimates %>%
@@ -265,6 +340,7 @@ va_2018_cl_collapsed <- va_2018_cl_categories %>%
             cl_value_100.125 = sum(cl_value_100.125, na.rm = TRUE),
             cl_value_125.150 = sum(cl_value_125.150, na.rm = TRUE),
             cl_value_150.175 = sum(cl_value_150.175, na.rm = TRUE),
+            cl_value_175.200 = sum(cl_value_175.200, na.rm = TRUE),
             cl_value_200.250 = sum(cl_value_200.250, na.rm = TRUE),
             cl_value_250.300 = sum(cl_value_250.300, na.rm = TRUE),
             cl_value_300.400 = sum(cl_value_300.400, na.rm = TRUE),
@@ -319,10 +395,15 @@ names(va_acs_wide_lower_ci)[2:42] <- paste0(names(va_acs_wide_lower_ci)[2:42],"_
 va_acs_wide_upper_ci <- va_acs_estimates %>% select(GEOID, varval, upper_ci) %>% spread(key=varval, value=upper_ci)
 names(va_acs_wide_upper_ci)[2:42] <- paste0(names(va_acs_wide_upper_ci)[2:42],"_upper")
 
+va_acs_wide_moe <- va_acs_estimates %>% select(GEOID, varval, moe) %>% spread(key=varval, value=moe)
+names(va_acs_wide_moe)[2:42] <- paste0(names(va_acs_wide_moe)[2:42],"_moe")
+
 # join them together
 acs_joined <- va_acs_wide_estimate %>% left_join(va_acs_wide_lower_ci, by="GEOID")
 acs_joined2 <- acs_joined %>% left_join(va_acs_wide_upper_ci, by="GEOID")
+acs_joined3 <- acs_joined2 %>% left_join(va_acs_wide_moe, by="GEOID")
 
 # now join CoreLogic; GEOID to ct_detect
-acs_cl_joined <- acs_joined2 %>% left_join(va_2018_cl_collapsed, by=c("GEOID"="ct_detect"))
+acs_cl_joined <- acs_joined3 %>% left_join(va_2018_cl_collapsed, by=c("GEOID"="ct_detect"))
 
+write_csv(acs_cl_joined, "~/git/dspg20broadbandERS/data/acs-cl-joined/acs_cl_joined_va.csv")
