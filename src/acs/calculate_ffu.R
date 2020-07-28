@@ -42,3 +42,7 @@ calc_ffu<- function(acs_cl_joined_data){
            ffu_occupancy_status_vacant = (occupancy_status_vacant - cl_vacant)/occupancy_status_vacant_moe)
 }
 ffu_va <- calc_ffu(acs_cl_joined)
+
+ffu_va <- select(ffu_va, c(GEOID, starts_with('ffu')))
+
+write_csv(ffu_va, '~/git/dspg20broadbandERS/data/acs-cl-joined/ffu_va.csv')
