@@ -44,6 +44,11 @@ shinyApp(
           icon = icon("database")
         ),
         menuItem(
+          tabName = "profiling",
+          text = "Data Profiling",
+          icon = icon("database")
+        ),
+        menuItem(
           tabName = "findings",
           text = "Findings",
           icon = icon("chart-pie")
@@ -193,6 +198,45 @@ shinyApp(
                     p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante.")
                   )
                 )),
+        tabItem(tabName = "profiling",
+                fluidRow(
+                  boxPlus(
+                   title = "Data Profiling",
+                   closable = FALSE,
+                   width = NULL,
+                   status = "warning",
+                   solidHeader = TRUE,
+                   collapsible = TRUE
+                   ,
+                   p("Data Profiling was the first task we undertook in determining the quality of the CoreLogic after performing the data discovery process. We profiled the Fairfax and New Kent county subsets of the CoreLogic housing data, in addition to the Fairfax county and New Kent county datasets. 
+                     Our profiling process focused on the six variables that our sponsors at the USDA highlighted as having the greatest effect on property prices: lot size, square footage, number of beds, number of baths, age, assessed value. To profile the data we considered the completeness of these variables, 
+                     the distribution of property types")
+                   ),
+                  boxPlus(
+                    title = "Fairfax Profiling",
+                    closable = FALSE,
+                    width = 6,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = FALSE,
+                    p("Greater range of missing values in the CoreLogic dataset"),
+                    img(src = "Missing_ffx.png", width = "360px", align = "left"),
+                   img(src = "Missing_CL_ffx.png", width = "360px", align = "center"),
+                   img(src = "fairfax_hist.png", width = "360px", align = "left")
+                   ),
+                  boxPlus(
+                    title = "New Kent Profiling",
+                    closable = FALSE,
+                    width = 6,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = FALSE,
+                    p("Greater range of missing values in the CoreLogic dataset"),
+                    img(src = "Missing_nk.png", width = "360px", align = "left"),
+                    img(src = "Missing_cl_nk.png", width = "360px", align = "right"),
+                    img(src = "nk_hist.png", width = "360px", align = "left"))
+         
+                )),
         tabItem(tabName = "findings",
                 fluidRow(
                   boxPlus(
@@ -217,14 +261,19 @@ shinyApp(
         tabItem(tabName = "team",
                 fluidRow(
                   boxPlus(
-                    title = "Findings",
+                    title = "Meet the Team",
                     closable = FALSE,
                     width = NULL,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     h2("DSPG Team Members"),
-                    p("[Photos go about here.]"),
+                    h3("Morgan"),
+                    img(src = "morgan.jfif",  width = "200px"),
+                    h3("Vatsala "),
+                    img(src = "Vatsala_Ramanan.jpg",  width = "200px"),
+                    h3("Madeline"),
+                    img(src = "maddie.jfif",  width = "200px"),
                     h2("UVA SDAD Team Members"),
                     p("[Photos go about here.]"),
                     h2("Project Sponsors"),
@@ -234,12 +283,14 @@ shinyApp(
                   )
                 ))
       )
-    ))
-  ),
+    )) 
+), 
+  
   
 
 # SERVER ------------------------------------------------------------------
   server = function(input, output) {
+    
     # Render Plot 1
     output$distPlot <- renderPlot({
       hist(rnorm(input$obs))
@@ -274,5 +325,8 @@ shinyApp(
                          options = providerTileOptions(noWrap = TRUE)) %>%
         addMarkers(data = points2())
     })
+    
+ 
+    
   }
 )
