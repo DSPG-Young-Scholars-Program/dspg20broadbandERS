@@ -71,19 +71,59 @@ shinyApp(
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     h1("2020 DSPG USDA-ERS Broadband"),
-                    h2("Project Description"),
-                    p("The Data Science for the Public Good (DSPG) Young Scholars program is a summer immersive program held at the Biocomplexity Institute’s Social and Decision Analytics division (SDAD). In its seventh year, the program engages students from across the country to work together on projects that address state, federal, and local government challenges around critical social issues relevant in the world today. DSPG young scholars conduct research at the intersection of statistics, computation, and the social sciences to determine how information generated within every community can be leveraged to improve quality of life and inform public policy."),
+                    h2("Project Description"), 
                     p("This DSPG project is a partnership with the USDA Economic Research Service. The project team worked with data from CoreLogic, a commercial data aggregator, to evaluate the quality of their national property data, particularly for rural areas."),
                     h2("Project Goals"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Fusee justo nisi, suscipit a lacus et, posuere sagittis ex."),
-                    h2("Our Approach"),
-                    p("We took a two-pronged approach to evaluating data quality:"),
-                    p("1. Since we did not have property-level data at a national level, we selected two counties in Virginia (Fairfax County and New Kent County) for which we did have property-level data. These counties served as case studies as we geocoded the address information we had for each property and made direct comparisons between the values given by the counties and their equivalent values in the CoreLogic data."),
-                    p("2. In order to evaluate data quality on a national scale, we used American Community Survey (ACS) estimates for housing variables at the census tract level. We compared the CoreLogic estimates for each census tract to the ACS estimates using a fitness-for-use metric established in a previous partnership with the Census Burea."),
-                    p("The exact methods of comparison are described in more detail in the Methodology tab."),
-                    h2("Ethical Considerations"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Fusee justo nisi, suscipit a lacus et, posuere sagittis ex.")
+                    p("The project sought to address the following questions:"), 
+
+p("What is the quality (coverage, representativeness) of CoreLogic 2018 property data compared to benchmark datasets, particularly for rural areas?"),
+
+p("How can we scale this meaningfully to the national level when we only have property-level data for certain counties? ")),
+                  
+                  boxPlus(
+                    title = "Our Approach",
+                    closable = FALSE,
+                    width = 6,
+                    status = "warning",
+                    solidHeader = FALSE,
+                    collapsible = FALSE,
+                    p("Undertook a data discovery process to find datasets to benchmark against the proprietary CoreLogic housing dataset. Narrowed down findings to the Fairfax county (affluent), New Kent (more rural) and American Community Survey datasets.  :"),
+                    p("Profiled the CoreLogic data subset for Fairfax and New Kent county in Virginia, in addition to the Fairfax county and New Kent county data set. "),
+                    p("Began geocoding the datasets to record link the county and CoreLogic data."),
+                    p("Benchmarked the CoreLogic data against the American Community Survey dataset using the following metrices: fitness for use over bins (define more in the methods section) "),
+                    p("Visualized the data on a dashboard  ")
+                  ),
+                  boxPlus(
+                    title = "Ethical Consideration",
+                    closable = FALSE,
+                    width = 6,
+                    status = "warning",
+                    solidHeader = FALSE,
+                    collapsible = FALSE,
+                    h3("What are the benefits of this project?"),
+                    p("If we are able to draw conclusions about the quality of CoreLogic data (particularly in rural areas), other projects will have a better sense of the risks/rewards of using this data. This could contribute to a larger movement of understanding the quality underlying private data aggregation companies. If we don't do a thorough job, or otherwise bias the quality analysis, this could have ripple effects on future projects."),
+                    h3("Project Assumptions"),
+                    p("Assumptions: CoreLogic has undertaken their collection in good faith (both to ensure quality and privacy)
+Assumptions: generalizability of focusing on a few counties (particularly affluent ones)
+Assumptions: all rural areas are the same or even similar across the US (AZ vs VA, for example)
+Assumptions: we can make meaningful comparisons between property-level data (i.e. CoreLogic or Fairfax) and survey aggregations (e.g. ACS)
+Assumptions: deed and/or property tax data is representative of actual property information 
+Assumptions: housing units are defined similarly across counties and geographical areas"), 
+                    h3("Dataset choice"),
+                    p("The CoreLogic dataset was provided to the team by the sponsor. In undertaking the data discovery process, to find appropriate datasets to benchmark the CoreLogic data, we considered the following: sample size, accessibility, geography, 
+                      unit of analysis. This process helped ensure the datasets were appropriate and useful to the project."),
+                    h3("Data quality"),
+                    p("From the data profiling process we found the following about data quality:
+
+                      The CoreLogic Fairfax data has between 7683 and 144, 037 missing values for the variables highlighted as important by USDA
+                      
+                      Fairfax county has between 453 and 1217 missing values
+                      
+                      CoreLogic New Kent data has between 802 and 13, 458 missing values
+                      
+                      New Kent county data has between 0 and 4634 missing values.")
                   )
+                  
                 )),
         tabItem(tabName = "map",
                 fluidRow(
@@ -236,6 +276,16 @@ shinyApp(
                                     )),
                            tabPanel("Geocoding",
                                     boxPlus(
+                                      title = "Geocoding",
+                                      closable = FALSE,
+                                      width = NULL,
+                                      status = "warning",
+                                      solidHeader = TRUE,
+                                      collapsible = TRUE
+                                      ,
+                                      p("Something Something")
+                                    ),
+                                    boxPlus(
                                       title = "Missing values in the latitude and longitude variables",
                                       closable = FALSE,
                                       width = NULL,
@@ -255,20 +305,49 @@ shinyApp(
         tabItem(tabName = "team",
                 fluidRow(
                   boxPlus(
-                    title = "Meet the Team",
+                    title = "Meet the DSPG Team",
                     closable = FALSE,
                     width = NULL,
                     status = "warning",
                     solidHeader = TRUE,
+                    collapsible = FALSE,
+                    p("The Data Science for the Public Good (DSPG) Young Scholars program is a summer immersive program held at the Biocomplexity Institute’s Social and Decision Analytics division (SDAD). In its seventh year, the program engages students from across the country to work together on projects that address state, federal, and local government challenges around critical social issues relevant in the world today. 
+                      DSPG young scholars conduct research at the intersection of statistics, computation, and the social sciences to determine how information generated within every community can be leveraged to improve quality of life and inform public policy.")),
+                  boxPlus(
+                    title = "Vatsala Ramanan",
+                    closable = FALSE,
+                    width = 4,
+                    status = "warning",
+                    solidHeader = FALSE,
+                    collapsible = FALSE,
+                    (img(src = "Vatsala_Ramanan.jpg", width = 250, height = 270)),
+                    p("DSPG 2020 Intern, Quantitative Economics and Government at Smith College, Github: v-ramanan")), 
+                  boxPlus(
+                    title = "Morgan Klutzke",
+                    closable = FALSE,
+                    width = 4,
+                    status = "warning",
+                    solidHeader = FALSE,
+                    collapsible = FALSE,
+                    (img(src = "UVA.intern.Morgan.Klutzke.jpg", width = 250, height = 270)),
+                    p("DSPG 2020 intern, Indiana University, Psychology and Cognitive Science, Gihub: mklutzke")), 
+                  boxPlus(
+                    title = "Madeline Pickens",
+                    closable = FALSE,
+                    width = 4,
+                    status = "warning",
+                    solidHeader = FALSE,
+                    collapsible = FALSE,
+                    (img(src = "maddie.jpg", width = 250, height = 270)),
+                    p("DSPG 2020 Fellow, Georgetown University, Data Science for Public Policy, Github: mclaire19")),
+             
+                  boxPlus(
+                    title = "UVA SDAD members",
+                    closable = FALSE,
+                    width = 12,
+                    status = "warning",
+                    solidHeader = TRUE,
                     collapsible = TRUE,
-                    h2("DSPG Team Members"),
-                    h3("Morgan"),
-                    img(src = "morgan.jfif",  width = "200px"),
-                    h3("Vatsala "),
-                    img(src = "Vatsala_Ramanan.jpg",  width = "200px"),
-                    h3("Madeline"),
-                    img(src = "maddie.jfif",  width = "200px"),
-                    h2("UVA SDAD Team Members"),
                     p("[Photos go about here.]"),
                     h2("Project Sponsors"),
                     p("[Photos, information, and/or links about your sponsor go about here. You may want to use materials that your sponsors have already shared with you about their institution or coordinate with your stakeholders to include pertinent information here.]"),
@@ -280,7 +359,7 @@ shinyApp(
     )) 
 ), 
   
-  
+
 
 # SERVER ------------------------------------------------------------------
   server = function(input, output) {
@@ -320,7 +399,6 @@ shinyApp(
         addMarkers(data = points2())
     })
     
- 
-    
+   
   }
-)
+) 
