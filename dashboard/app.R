@@ -4,8 +4,16 @@ library(shinydashboard)
 library(shinydashboardPlus)
 library(leaflet)
 library(dashboardthemes)
+library(tidyverse)
+library(DT)
 
 source("theme.R")
+
+va_table_long <- read_csv('data/va_table_long.csv')
+vacounties <- unique(va_table_long$County)
+ffu_va_value <- va_table_long %>% filter(str_detect(variable, "value"))
+ffu_va_yrbuilt <- va_table_long %>% filter(str_detect(variable, "yrbuilt"))
+ffu_va_housing <- va_table_long %>% filter(str_detect(variable, "housing|occ"))
 
 shinyApp(
   ui = dashboardPagePlus(
@@ -36,7 +44,7 @@ shinyApp(
         menuItem(
           tabName = "vatable",
           text = "Virginia Table",
-          icon = icon("map-marked-alt")
+          icon = icon("chart-pie")
         ),
         menuItem(
           tabName = "vamap",
@@ -138,9 +146,18 @@ shinyApp(
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    width = NULL
+                    width = NULL,
+                    selectInput(
+                      inputId = 'vacty',
+                      label = 'Select a Virginia County',
+                      choices = vacounties),
+                    uiOutput("ruralText"),
+                    p("If the plots and table are empty, CoreLogic did not have data for this county."),
+                    dataTableOutput("countyTable"),
+                    plotOutput('ctyvalue'),
+                    plotOutput('ctyyrbuilt'),
+                    plotOutput('ctyhousing')
                   ),
-                  p("Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
                   br()
                 )),
         tabItem(tabName = "data",
@@ -303,15 +320,65 @@ shinyApp(
 # SERVER ------------------------------------------------------------------
   server = function(input, output) {
     
-    # Render Plot 1
-    output$distPlot <- renderPlot({
-      hist(rnorm(input$obs))
-    })
-    # Render Plot 2
-    output$distPlot2 <- renderPlot({
-      hist(rnorm(input$obs2))
+    # Render Housing Plot
+    output$ctyhousing <- renderPlot({
+      cty <- ffu_va_housing %>%
+        filter(County == input$vacty) %>%
+        filter(variable != 'percent_rural')
+      cty %>%
+        ggplot(aes(value, variable)) + 
+        geom_point() + 
+        geom_vline(xintercept = -1, linetype = "dashed", color = "red") + 
+        geom_vline(xintercept = 1, linetype = "dashed", color = "red")
     })
     
+    # Render Value Plot
+    output$ctyvalue <- renderPlot({
+      cty <- ffu_va_value %>%
+        filter(County == input$vacty) %>%
+        filter(variable != 'percent_rural')
+      cty %>%
+        ggplot(aes(value, variable)) + 
+            geom_point() + 
+            geom_vline(xintercept = -1, linetype = "dashed", color = "red") + 
+            geom_vline(xintercept = 1, linetype = "dashed", color = "red")
+    })
+    
+    # Render Year Built Plot
+    output$ctyyrbuilt <- renderPlot({
+      cty <- ffu_va_yrbuilt %>%
+        filter(County == input$vacty) %>%
+        filter(variable != 'percent_rural')
+      cty %>%
+        ggplot(aes(value, variable)) + 
+        geom_point() + 
+        geom_vline(xintercept = -1, linetype = "dashed", color = "red") + 
+        geom_vline(xintercept = 1, linetype = "dashed", color = "red")
+    })
+    
+    output$ruralText <- renderUI({
+      cty <- va_table_long %>%
+        filter(County == input$vacty) %>%
+        filter(variable == 'percent_rural')
+      pctrural <- round(cty$value*100,1)
+
+      h4(paste(input$vacty, 
+               " is ", pctrural, " percent rural based on the census tracts it contains.", 
+               sep = ""))
+    })
+    
+    output$countyTable <- DT::renderDataTable({
+      cty <- va_table_long %>%
+        filter(County == input$vacty) %>%
+        dplyr::select(-County) %>%
+        filter(variable != 'percent_rural') %>%
+        mutate(good = ifelse(abs(value) <= 1, 1, 0)) %>%
+        datatable() %>% 
+        formatStyle(
+          columns = 5,
+          backgroundColor = styleEqual(c(0, 1), c('gray', 'yellow'))
+        )
+    }) 
    
   }
 ) 
