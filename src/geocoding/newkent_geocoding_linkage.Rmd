@@ -1,0 +1,519 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(stringr)
+
+loc.validate_address <- function(address_1 = "",
+                                 address_2 = "1100 Wilson Blvd",
+                                 city = "Arlington",
+                                 state = "VA",
+                                 zip5 = "",
+                                 zip4 = "",
+                                 full_info = TRUE,
+                                 usps_userid = "789UNIVE1553") {
+    if (full_info == TRUE) rev <- 1 else rev <- 0
+    url <- paste0("https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=<AddressValidateRequest USERID=\"", usps_userid, "\">
+        <Revision>", rev,"</Revision>
+        <Address>
+            <Address1>", address_1,"</Address1>
+            <Address2>", address_2,"</Address2>
+            <City>", city,"</City>
+            <State>", state,"</State>
+            <Zip5>", zip5,"</Zip5>
+            <Zip4>", zip4,"</Zip4>
+        </Address>
+        </AddressValidateRequest>") %>%
+        stringr::str_replace_all("(\n|\\s+)", " ") %>%
+        utils::URLencode()
+    ls <- xml2::as_list(xml2::read_xml(url))
+    t(as.data.frame(lapply(ls$AddressValidateResponse, unlist)))
+}
+
+
+# loc.validate_address(address_2 = "2 Maidens Bower Court", city = "Potomac", state = "MD", zip5 = "20854")
+
+### COUNTY DATA
+original_newkent_county <-read_excel("~/git/dspg20broadbandERS/data/new-kent-data/NK ASSESSMENT REPORT 2020.xlsx") #13,650
+geocoded_newkent_county <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/geocoded_newkent_countydata_20JULY2020.RDS") #13,468
+
+subset_geocoded_nk <- geocoded_newkent_county %>%
+                      filter(!is.na(lat)) #,8988
+
+# orig_newkent_stand_add <- loc.validate_address(address_2 = original_newkent_county$`Property Location`, 
+#                                                city = original_newkent_county$City, 
+#                                                state = "VA", 
+#                                                zip5 = str_extract(original_newkent_county$Zip, "\\d{5}") )
+# 
+# orig_newkent_stand_add <- list()
+# 
+# for (i in 1:nrow(original_newkent_county)) {
+#   orig_newkent_stand_add[[i]] <- loc.validate_address(address_2 = original_newkent_county$`Property Location`[i], 
+#                                                city = original_newkent_county$City[i], 
+#                                                state = "VA", 
+#                                                zip5 = str_extract(original_newkent_county$Zip[i], "\\d{5}") ) %>%
+#     as.data.frame
+# }
+
+# df <- do.call("rbind", orig_newkent_stand_add) 
+# 
+# df <- reshape2::melt(orig_newkent_stand_add)
+# 
+# df_dim <- lapply(orig_newkent_stand_add, FUN = dim)
+# df_dim
+# unlist(head(df_dim, 100))
+# saveRDS(orig_newkent_stand_add, "~/orig_newkent_stand_add.RDS")
+# 
+# orig_newkent_stand_add[[1]] %>% class()
+
+```
+
+```{r}
+library(dataplumbr)
+library(data.table)
+
+addresses <- data.table(
+  # address1 = ,
+  address2 = original_newkent_county$`Property Location`,
+  city = original_newkent_county$City,
+  state = "VA",
+  zip = str_extract(original_newkent_county$Zip, "\\d{5}")
+)
+if (exists("addr_final")) rm(addr_final)
+for (i in 1:nrow(addresses)) {
+  parsed <- loc.validate_address(
+    address_1 = addresses$address1[i],
+    address_2 = addresses$address2[i],
+    city = addresses$city[i],
+    zip5 = addresses$zip[i]
+  ) %>%
+    as.data.table()
+  if (exists("addr_final")) {
+    addr_final <- rbindlist(list(addr_final, parsed), use.names = TRUE, fill = TRUE)
+  } else {
+    addr_final <- parsed
+  }
+}
+
+addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr.RDS")
+
+
+```
+
+
+
+```{r}
+
+###### CORELOGIC DATA
+# con <- get_db_conn()
+# 
+# nk_2018 <- DBI::dbGetQuery(con, statement = paste(
+#   "SELECT fips_code, apn__parcel_number_unformatted_, apn_sequence_number, original_apn, census_tract, legal_lot_number, township, municipality_code,
+#   property_indicator_code, assessed_total_value, market_total_value, tax_amount, tax_year, assessed_year,
+#   acres, land_square_footage, building_square_feet, living_square_feet, year_built, effective_year_built,
+#   bedrooms, total_baths, full_baths, half_baths, parcel_level_latitude, parcel_level_longitude, block_level_latitude, block_level_longitude,
+#   situs_house_number, situs_street_name, situs_mode, situs_city, situs_state, situs_zip_code",
+#   "FROM corelogic_sdad.tax_hist_2_51",
+#   "WHERE fips_code='51127' AND tax_year = '2018' ")) #12,690
+# 
+# saveRDS(nk_2018, "~/original_newkent_corlogic2018data.RDS")
+# DBI::dbDisconnect(con)
+
+nk_2018 <- readRDS("~/original_newkent_corlogic2018data.RDS")
+
+subset_cl_nk <- nk_2018 %>%
+                filter(!is.na(parcel_level_latitude)) #12,359
+```
+
+
+```{r}
+addresses <- data.table(
+  # address1 = ,
+  address2 = paste(ifelse(!is.na(nk_2018$situs_house_number), nk_2018$situs_house_number, ""), 
+                   ifelse(!is.na(nk_2018$situs_house_number), nk_2018$situs_street_name, ""), 
+                   ifelse(!is.na(nk_2018$situs_house_number), nk_2018$situs_mode, "") 
+                   ),
+  city = ifelse(!is.na(nk_2018$situs_city), nk_2018$situs_city, ""), 
+  state = "VA",
+  zip = str_extract(nk_2018$situs_zip_code, "\\d{5}")
+)
+if (exists("addr_final")) rm(addr_final)
+for (i in 1:nrow(addresses)) {
+  parsed <- loc.validate_address(
+    address_1 = addresses$address1[i],
+    address_2 = addresses$address2[i],
+    city = addresses$city[i],
+    zip5 = addresses$zip[i]
+  ) %>%
+    as.data.table()
+  if (exists("addr_final")) {
+    addr_final <- rbindlist(list(addr_final, parsed), use.names = TRUE, fill = TRUE)
+  } else {
+    addr_final <- parsed
+  }
+}
+
+# addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_cl_stand_addr_1.RDS")
+
+```
+
+```{r}
+cl_stand <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_cl_stand_addr_1.RDS")
+cty_stand <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr.RDS")
+
+cl_stand_nona <- cl_stand %>% filter(!is.na(Address2)) %>% select(-1, -2, -3)
+cty_stand_nona <- cty_stand %>% filter(!is.na(Address2))
+
+cty_matched_stand <- cty_stand_nona %>% inner_join(cl_stand_nona, by = c("Address2", "City", "State", "Zip5", "Zip4")) %>% mutate(addr = paste0(Address2, ", ", City, ", ", State, ", ", Zip5))
+
+cty_matched_geo <- tidygeocoder::geo_cascade()
+
+data_list <- list()
+
+for (i in 1:nrow(cty_matched_stand)) {
+  #to see whether geocode in census works
+  lat_long <- tidygeocoder::geocode(cty_matched_stand[i, c("addr")], addr, method = "census") %>%
+    mutate(method = "census")
+  # if lat, long is NA
+  if (is.na(lat_long$lat)) {
+    lat_long <- tidygeocoder::geocode(cty_matched_stand[i, c("addr")], addr, method = "osm") %>%
+    mutate(method = ifelse(is.na(lat), "none", "osm"))
+  }
+data_list[[i]] <- lat_long
+
+}
+nk_geo_data <- do.call(rbind, data_list)
+cty_matched_stand
+```
+
+
+```{r}
+county_parsely <- subset_geocoded_nk %>% filter(str_detect(addr, "^12110"))
+
+corelogic_parsley <- subset_cl_nk %>% filter(situs_house_number == "12110")
+
+
+library(sf)
+st_geometry(subset_geocoded_nk)
+st_geometry(subset_cl_nk)
+
+st_crs(subset_geocoded_nk)
+st_crs(subset_cl_nk)
+
+subset_geocoded_nk <- st_as_sf(subset_geocoded_nk, coords = c("lat", "long"), 
+                                           crs = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs")
+subset_cl_nk <- st_as_sf(subset_cl_nk, coords = c("parcel_level_latitude", "parcel_level_longitude"), 
+                                     crs = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs")
+
+county_parsely <- st_as_sf(county_parsely, coords = c("lat", "long"), 
+                                           crs = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs")
+corelogic_parsley <- st_as_sf(corelogic_parsley, coords = c("parcel_level_latitude", "parcel_level_longitude"), 
+                                     crs = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs")
+
+
+parsleytoparsley <- st_distance(county_parsely, corelogic_parsley)
+geocoding_parsley_distances <- st_distance(county_parsely, subset_cl_nk)
+min(geocoding_parsley_distances) 
+geocoding_newkent_distances <- st_distance(subset_geocoded_nk, subset_cl_nk)
+
+rownames(geocoding_newkent_distances) <- subset_geocoded_nk$`PID #`
+colnames(geocoding_newkent_distances) <- rownames(subset_cl_nk)
+
+
+
+min_dist <- apply(geocoding_newkent_distances, MARGIN = 1, FUN = min)
+
+df = data.frame(PID = subset_geocoded_nk$`PID #`, min = min_dist) 
+
+geocoding_newkent_distances %>% head() %>% as.numeric() #%>% transpose
+
+geocoding_newkent_distances_num <- apply(geocoding_newkent_distances %>% as.data.frame(), MARGIN = 2, FUN = as.numeric)
+geocoding_newkent_distances_num <- geocoding_newkent_distances_num %>% as.data.frame()
+
+geocoding_newkent_distances_num %>% head()
+
+for (i in 1:nrow(geocoding_newkent_distances_num)) {
+  val <- geocoding_newkent_distances_num[i,] %>% reshape2::melt() %>% transmute(PID = i, CL = variable, dist = value) %>% filter(dist == min_dist[i]) %>% .$CL
+  df$vals[i] <- as.numeric(val)
+}
+# df$vals <- NULL
+# rm(i)
+
+df
+saveRDS(df, "~/git/dspg20broadbandERS/data/geocoding-output/min_dist_newkent_matches.RDS")
+
+df <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/min_dist_newkent_matches.RDS")
+
+df
+
+max(min_dist)
+min(min_dist)
+table(min_dist > 1)
+table(min_dist > 5)
+table(min_dist > 10)
+
+countydata <- subset_geocoded_nk %>% select(`PID #`, addr)
+# st_geometry(countydata) <- NULL
+
+cl_data <- subset_cl_nk %>% transmute(CL_ID = 1:nrow(.), situs_house_number, situs_street_name, situs_mode, situs_city, situs_state, situs_zip_code, apn__parcel_number_unformatted_, apn_sequence_number, original_apn)
+
+df <- df %>% filter(min < 0.5) %>% 
+  left_join(subset_geocoded_nk %>% select(`PID #`, addr), by = c("PID" = "PID #")) %>% 
+  transmute(CTY_PID = PID, min_dist = min, CL_matches = vals, CTY_addr = addr) %>%
+  left_join(cl_data, by = c("CL_matches" = "CL_ID"))
+
+df %>% filter(min_dist <0.0001) 
+
+
+library(stringr)
+subset_cl_nk
+
+subset_geocoded_nk %>% mutate(addr_broken = str_split(addr, pattern = ",")) %>% tidyr::unnest("addr_broken") %>% mutate(cat = ifelse(str_detect(addr_broken, "VA"), "STATE", 
+       ifelse(str_detect(addr_broken, "\\d$"),"ZIP", 
+        ifelse(str_detect(addr_broken, "^\\d") & str_detect(addr_broken, "[[:alpha:]]$"), "ADDR", "CITY" )))) 
+
+CLdata2 <- subset_cl_nk %>% transmute(CL_ID = 1:nrow(.), situs_house_number, situs_street_name, situs_mode, situs_city, situs_state, situs_zip_code, apn__parcel_number_unformatted_, apn_sequence_number, original_apn, parcel_level_latitude, parcel_level_longitude)
+CLdata2
+
+"12110 Parsley Rd, New Kent, VA 23124"
+
+subset_geocoded_nk %>% filter(str_detect(addr, "^12110"))
+CLdata2 %>% filter(situs_house_number == "12110")
+
+df %>% filter(str_detect(CTY_addr, "^12110"))
+```
+
+
+
+```{r}
+
+
+# county_parsely <- subset_geocoded_nk %>% filter(str_detect(addr, "^12110"))
+# corelogic_parsley <- subset_cl_nk %>% filter(situs_house_number == "12110")
+
+county_parsely <- subset_geocoded_nk %>% filter(str_detect(addr, "^12110") |str_detect(addr, "^8000 C"))
+corelogic_parsley <- subset_cl_nk %>% 
+  filter(situs_house_number == "12110" |
+           (situs_house_number == "8000" & str_detect(situs_street_name, "^CURTIS")) 
+           )
+
+
+county_parsely <- county_parsely %>% mutate(state = str_trim(str_remove_all(str_extract(addr, ", [A-Z]{2},"), "[[:punct:]]")), 
+                          zip = str_extract(addr, "\\d{5}$|\\d{9}$"),
+                          street = str_remove(str_extract(addr, "^(.+?),"), ",$"), 
+                          city = str_trim(str_remove_all(str_remove(str_remove(str_remove(addr, pattern = street), 
+                                                       pattern = zip), pattern = state), pattern = ",")))
+
+cl_parsley_addronly <- corelogic_parsley %>% 
+  transmute(situs_street_a = str_trim(paste(situs_house_number, situs_street_name, ifelse(!is.na(situs_mode), situs_mode),"")),
+            situs_city, situs_state, situs_zip_code)
+
+county_parsely
+cl_parsley_addronly
+
+county_parsely %>% left_join(cl_parsley_addronly, by = c("street" = "situs_street_a")) #, 
+                                                         "city" = "situs_city", 
+                                                         "state" = "situs_state")) #c("state" = "situs_state"))
+
+county_parsely$street
+cl_parsley_addronly$situs_street_a
+
+"0 OLD CHURCH RD, NEW KENT, VA, 23124	"
+"CARRIAGE RD, PROVIDENCE FORGE, VA, 23140	"
+
+subset_cl_nk %>% filter(str_detect(situs_house_number, "5950") & str_detect(situs_street_name, "TRINA"))
+subset_cl_nk %>% filter(str_detect(situs_street_name, "CARRIAGE") & is.na(situs_house_number)) #%>% count(situs_house_number) 
+# 0 OLD CHURCH - #56 rows NA, no 0 
+# CARRIAGE ROAD - # 5 rows NA
+
+
+corelogic_parsley <- subset_cl_nk %>% 
+  filter(situs_house_number == "12110" |
+           (situs_house_number == "8000" & str_detect(situs_street_name, "^CURTIS")) 
+           )
+
+```
+
+
+```{r}
+county_matchable <- subset_geocoded_nk  %>% 
+  mutate(state = str_trim(str_remove_all(str_extract(addr, ", [A-Z]{2},"), "[[:punct:]]")), 
+                          zip = str_extract(addr, "\\d{5}$|\\d{9}$|\\d{5}(-\\d{4})?$"),
+                          street = str_remove(str_extract(addr, "^(.+?),"), ",$"), 
+                          city = str_trim(str_remove_all(str_remove(str_remove(str_remove(addr, pattern = street), 
+                                                       pattern = zip), pattern = state), pattern = ","))) %>%
+  filter(state == "VA") %>%
+  filter(!is.na(city)) %>% 
+  filter(str_detect(street, "^\\d") == TRUE) 
+
+county_notmatchable <-  subset_geocoded_nk  %>% 
+  mutate(state = str_trim(str_remove_all(str_extract(addr, ", [A-Z]{2},"), "[[:punct:]]")), 
+                          zip = str_extract(addr, "\\d{5}$|\\d{9}$|\\d{5}(-\\d{4})?$"),
+                          street = str_remove(str_extract(addr, "^(.+?),"), ",$"), 
+                          city = str_trim(str_remove_all(str_remove(str_remove(str_remove(addr, pattern = street), 
+                                                       pattern = zip), pattern = state), pattern = ","))) %>%
+  filter(state != "VA"|is.na(city) |str_detect(street, "^\\d") == FALSE) 
+
+nrow(county_matchable) + nrow(county_notmatchable) == nrow(subset_geocoded_nk)
+
+##############
+
+corelogic_matchable <- subset_cl_nk %>% 
+  mutate(situs_street_a = str_trim(paste(situs_house_number, situs_street_name, 
+                                         ifelse(!is.na(situs_mode), situs_mode, "")))) %>% 
+  filter(!is.na(situs_house_number)) %>%
+  filter(!is.na(situs_street_name)) %>%
+  filter(!is.na(situs_city)) %>%
+  filter(situs_state == "VA")
+
+corelogic_notmatchable <- subset_cl_nk %>% 
+  mutate(situs_street_a = str_trim(paste(situs_house_number, situs_street_name, 
+                                         ifelse(!is.na(situs_mode), situs_mode, "")))) %>% 
+  filter(is.na(situs_house_number) | is.na(situs_street_name) | is.na(situs_city) | situs_state != "VA")
+
+nrow(corelogic_matchable) + nrow(corelogic_notmatchable) == nrow(subset_cl_nk)
+
+```
+
+```{r}
+nrow(county_matchable ) #8030
+nrow(corelogic_matchable) #9244
+
+length(unique(county_matchable$street))
+length(unique(corelogic_matchable$situs_street_a))
+
+# [1] 7913
+# [1] 9138
+
+dupes_CTY <- county_matchable %>% count(street) %>% filter(n > 1) %>% .$street
+dupes_CL <- corelogic_matchable %>% count(situs_street_a) %>% filter(n > 1) %>% .$situs_street_a
+
+county_matchable %>% filter(street %in% dupes_CTY)
+subset_geocoded_nk %>% filter(str_detect(addr, paste0(dupes_CTY, collapse = "|")))
+original_newkent_county %>% filter(str_detect(`Property Location`, paste0(dupes_CTY, collapse = "|"))) %>% arrange(desc(`Property Location`)) %>% count(`Property Location`)  %>% filter(n != 1) 
+
+geocoded_newkent_county
+```
+
+
+```{r}
+
+### First round of matching on full street address: house number, street name, street type
+
+nrow(county_matchable ) #8030
+nrow(corelogic_matchable) #9244
+
+county_corelogic_matched <- county_matchable %>% inner_join(corelogic_matchable, by = c("street" = "situs_street_a"))
+county_corelogic_matched %>% select(1:8, 38:43,  14,34:35,  18:22 ) %>% select(2, 9:12)
+
+county_corelogic_matchless <- county_matchable %>% anti_join(corelogic_matchable, by = c("street" = "situs_street_a"))
+corelogic_county_matchless <- corelogic_matchable %>% anti_join(county_matchable, by = c("situs_street_a" = "street"))
+
+#################
+
+### Second round of matching on partial street address: house number, street name
+
+county_corelogic_matchless <- county_corelogic_matchless %>% mutate(street_b = str_remove(street, "\\s[A-Z]{2}$"))
+corelogic_county_matchless <- corelogic_county_matchless %>% mutate(situs_street_b = str_trim(paste(situs_house_number, situs_street_name)))
+
+county_corelogic_matched_b <- county_corelogic_matchless %>% inner_join(corelogic_county_matchless, by = c("street_b" = "situs_street_b"))
+county_corelogic_matched_b %>% select(street, street_b, situs_street_a)
+
+county_corelogic_matchless_b <- county_corelogic_matchless %>% anti_join(corelogic_county_matchless, by = c("street_b" = "situs_street_b"))
+corelogic_county_matchless_b <- corelogic_county_matchless %>% anti_join(county_corelogic_matchless, by = c("situs_street_b" = "street_b"))
+
+"11525 WILDFOX LN, NEW KENT, VA, 23124" # Corelogic has WILD FOX with a space
+"4440 N COURTHOUSE RD, PROVIDENCE FORGE, VA, 23140" #Corelogic does not have North
+# "6419 MAPLE RD, QUINTON, VA, 23141" # CL has 3 diff maple Rd addresses, but not this one
+# "6080 LAUREL BREEZE LN, BARHAMSVILLE, VA, 23011	" #Corelogic doesn't have any  laurel breeze
+"21060 KIRBY'S FARM RD, BARHAMSVILLE, VA, 23011" #Corelogic doesn't have apostrophe
+"	2930 CLAYMOUNT RD, PROVIDENCE FORGE, VA, 23140" #Corelogic doesn't have U 
+
+county_corelogic_matchless_b
+corelogic_county_matchless_b %>% filter(str_detect(situs_street_a, "2930")) %>% select(situs_street_a)
+
+### Potential third round? - Apostrophes 
+
+county_corelogic_matchless_b <- county_corelogic_matchless_b %>% 
+  mutate(street_c = str_replace_all(str_remove_all(street, "[[:punct:]]"), pattern = "\\s(N|S|W)\\s", replacement = " "))
+corelogic_county_matchless_b <- corelogic_county_matchless_b %>% 
+  mutate(situs_street_c = str_replace_all(str_remove_all(situs_street_a, "[[:punct:]]"), pattern = "\\s(N|S|W)\\s", replacement = " "))
+
+county_corelogic_matched_c <- county_corelogic_matchless_b %>% inner_join(corelogic_county_matchless_b, by = c("street_c" = "situs_street_c"))
+county_corelogic_matched_c %>% select(street, street_b, situs_street_a)
+
+county_corelogic_matchless_c <- county_corelogic_matchless_b %>% anti_join(corelogic_county_matchless_b, by = c("street_c" = "situs_street_c"))
+corelogic_county_matchless_c <- corelogic_county_matchless_b %>% anti_join(county_corelogic_matchless_b, by = c("situs_street_c" = "street_c"))
+
+"6010 SOUTH GARDEN RD, PROVIDENCE FORGE, VA, 23140	" # Corelogic doesn't have SOUTH
+"815 W RIVERSIDE DR, LANEXA, VA, 23089	" #Missing entirely
+"1000 W RIVERSIDE DR, LANEXA, VA, 23089	" # Missing entirely
+"14801 STAGE RD, LANEXA, VA, 23089" # missing entirely
+"6555 MARL SPRING DR, NEW KENT, VA, 23124	" # CL has plural springs
+"4977 LYNN LAKE CT, BARHAMSVILLE, VA, 23011	" # CL missing space between Lynn & Lake
+"5931 GOLDEN WHEEL RD, PROVIDENCE FORGE, VA, 23140" # Missing entirely 
+"18119 NEW KENT HW, BARHAMSVILLE, VA, 23011	" # Missing entirely 
+
+county_corelogic_matchless_c
+corelogic_county_matchless_c %>% filter(str_detect(situs_street_a, "18119")) %>% select(situs_street_a)
+
+res <- data.frame("Method" = c("1. Full Street Address", "2. Partial Street Address", "3. Apostrophes/Direction"),
+           "Matched" = c(nrow(county_corelogic_matched), nrow(county_corelogic_matched_b), nrow(county_corelogic_matched_c)),
+           "CTY_Left" = c(nrow(county_corelogic_matchless), nrow(county_corelogic_matchless_b), nrow(county_corelogic_matchless_c)),
+           "CL_Left" = c(nrow(corelogic_county_matchless), nrow(corelogic_county_matchless_b), nrow(corelogic_county_matchless_c))
+           )
+
+nrow(county_matchable ) #8030
+nrow(corelogic_matchable) #9244
+
+res
+sum(res$Matched)
+sum(res$Matched) #+ 695 == 8030
+```
+
+```{r}
+# loc.validate_address(address_2 = county_corelogic_matchless_c$addr, state = "VA", zip5 = county_corelogic_matchless_c$zip)
+
+library(sf)
+
+
+sf1 <- county_corelogic_matched %>% st_as_sf(coords = c("long", "lat"))
+
+county_corelogic_matched
+
+library(leaflet)
+
+leaflet() %>%
+  addTiles() %>% 
+  addCircleMarkers(lng = county_corelogic_matched$long, lat = county_corelogic_matched$lat)
+```
+
+
+```{r}
+8030 - (6085 + 2034)
+9244 - (6085 + 3222)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
