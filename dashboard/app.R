@@ -24,21 +24,6 @@ shinyApp(
           icon = icon("info circle")
         ),
         menuItem(
-          tabName = "map",
-          text = "Interactive Map",
-          icon = icon("map-marked-alt")
-        ),
-        menuItem(
-          tabName = "graph",
-          text = "Interactive Graph",
-          icon = icon("map-marked-alt")
-        ),
-        menuItem(
-          tabName = "both",
-          text = "Mutiple Interactive",
-          icon = icon("map-marked-alt")
-        ),
-        menuItem(
           tabName = "data",
           text = "Data & Methodology",
           icon = icon("database")
@@ -47,6 +32,16 @@ shinyApp(
           tabName = "findings",
           text = "Findings",
           icon = icon("chart-pie")
+        ),
+        menuItem(
+          tabName = "vatable",
+          text = "Virginia Table",
+          icon = icon("map-marked-alt")
+        ),
+        menuItem(
+          tabName = "vamap",
+          text = "Virginia Map",
+          icon = icon("map-marked-alt")
         ),
         menuItem(
           tabName = "team",
@@ -70,144 +65,83 @@ shinyApp(
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    h1("2020 DSPG USDA-ERS Broadband"),
+                    h1("2020 DSPG USDA-ERS: Evaluating Residential Property Data Quality"),
                     h2("Project Description"), 
-                    p("This DSPG project is a partnership with the USDA Economic Research Service. The project team worked with data from CoreLogic, a commercial data aggregator, to evaluate the quality of their national property data, particularly for rural areas."),
+                    p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data."),
                     h2("Project Goals"),
                     p("The project sought to address the following questions:"), 
-
-p("What is the quality (coverage, representativeness) of CoreLogic 2018 property data compared to benchmark datasets, particularly for rural areas?"),
-
-p("How can we scale this meaningfully to the national level when we only have property-level data for certain counties? ")),
+                    tags$ul(
+                      tags$li("What is the quality (coverage, representativeness) of CoreLogic 2018 property data compared to benchmark datasets, particularly for rural areas?"), 
+                      tags$li("How can we scale this meaningfully to the national level when we only have property-level data for certain counties?")
+                    )
+                    ),
                   
                   boxPlus(
                     title = "Our Approach",
                     closable = FALSE,
-                    width = 6,
+                    width = NULL,
                     status = "warning",
-                    solidHeader = FALSE,
-                    collapsible = FALSE,
-                    p("Undertook a data discovery process to find datasets to benchmark against the proprietary CoreLogic housing dataset. Narrowed down findings to the Fairfax county (affluent), New Kent (more rural) and American Community Survey datasets.  :"),
-                    p("Profiled the CoreLogic data subset for Fairfax and New Kent county in Virginia, in addition to the Fairfax county and New Kent county data set. "),
-                    p("Began geocoding the datasets to record link the county and CoreLogic data."),
-                    p("Benchmarked the CoreLogic data against the American Community Survey dataset using the following metrices: fitness for use over bins (define more in the methods section) "),
-                    p("Visualized the data on a dashboard  ")
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    p("Our project process included the following elements of the data science framework:"),
+                    h4("Data Discovery"),
+                    p("We undertook a data discovery process to find datasets to benchmark against the proprietary CoreLogic housing dataset. We considered sample size, accessibility, geography, variables provided, and unit of analysis to ensure the datasets were appropriate and useful to the project. We narrowed down our findings to:"),
+                      tags$ul(
+                        tags$li("Property data from Fairfax County, Virginia, which is primarily affluent and urban"),
+                        tags$li("Property data from New Kent County, Virginia, which is more rural and less affluent than Fairfax County"),
+                        tags$li("Housing data from the American Community Survey (ACS), a national survey undertaken by the Census Bureau")),
+                    h4("Data Profiling"),
+                    p("We profiled the CoreLogic data subset for Fairfax County and New Kent County in Virginia, in addition to the Fairfax County and New Kent County data sets described above, to compare the completeness and variables included in each dataset."),
+                    h4("Data Preparation and Linkage"),
+                    p("We used the Census geocoder to geocode the subsets of the CoreLogic data for Fairfax and New Kent that did not have a property-level latitude and longitude. We also geocoded the New Kent County data as latitude and longitude was not provided in the original data. We attempted record linkage between the county and CoreLogic data and learned that linkage on latitude and longitude may not be possible given the way latitudes and longitudes in the CoreLogic data were generated."),
+                    p("We additionally grouped the CoreLogic data by census tract and created equivalent variables to ACS estimates for total housing counts, vacancy status, year built, and assessed property value. We then linked these estimates at the census tract level and began exploring the differences between CoreLogic and ACS estimates."),
+                    h4("Statistical Analysis"),
+                    p("Using the linked CoreLogic and ACS data, we benchmarked the CoreLogic data using a \"fitness-for-use\" metric derived from a previous Census partnership. Discussed more in the methodology section, the fitness-for-use metric takes into account both the ACS estimate and the ACS margin of error when comparing with the CoreLogic values.")
                   ),
                   boxPlus(
-                    title = "Ethical Consideration",
+                    title = "Ethical Considerations and Limitations",
                     closable = FALSE,
-                    width = 6,
+                    width = NULL,
                     status = "warning",
-                    solidHeader = FALSE,
-                    collapsible = FALSE,
-                    h3("What are the benefits of this project?"),
-                    p("If we are able to draw conclusions about the quality of CoreLogic data (particularly in rural areas), other projects will have a better sense of the risks/rewards of using this data. This could contribute to a larger movement of understanding the quality underlying private data aggregation companies. If we don't do a thorough job, or otherwise bias the quality analysis, this could have ripple effects on future projects."),
-                    h3("Project Assumptions"),
-                    p("Assumptions: CoreLogic has undertaken their collection in good faith (both to ensure quality and privacy)
-Assumptions: generalizability of focusing on a few counties (particularly affluent ones)
-Assumptions: all rural areas are the same or even similar across the US (AZ vs VA, for example)
-Assumptions: we can make meaningful comparisons between property-level data (i.e. CoreLogic or Fairfax) and survey aggregations (e.g. ACS)
-Assumptions: deed and/or property tax data is representative of actual property information 
-Assumptions: housing units are defined similarly across counties and geographical areas"), 
-                    h3("Dataset choice"),
-                    p("The CoreLogic dataset was provided to the team by the sponsor. In undertaking the data discovery process, to find appropriate datasets to benchmark the CoreLogic data, we considered the following: sample size, accessibility, geography, 
-                      unit of analysis. This process helped ensure the datasets were appropriate and useful to the project."),
-                    h3("Data quality"),
-                    p("From the data profiling process we found the following about data quality:
-
-                      The CoreLogic Fairfax data has between 7683 and 144, 037 missing values for the variables highlighted as important by USDA
-                      
-                      Fairfax county has between 453 and 1217 missing values
-                      
-                      CoreLogic New Kent data has between 802 and 13, 458 missing values
-                      
-                      New Kent county data has between 0 and 4634 missing values.")
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    p("This project will give enable researchers to better understand the quality of CoreLogic data, including its strengths and weaknesses. Many traditional components of an ethical analysis (for example, whether data is geographically representative) are actually inherently part of our project goals."),
+                    p("However, we still made assumptions in the framing of our project that may impact the quality of our results. These assumptions included:"),
+                    tags$ul(
+                      tags$li("Results from just a few counties or states can be meaningfully generalized to a larger sample (while we only currently have results for Virginia, the data quality for a different state may look very different)"), 
+                      tags$li("Housing units are defined similarly across counties and geographic areas (we had to make assumptions about which property types were residential in order to draw comparisons between CoreLogic and ACS data)"),
+                      tags$li("Data taken directly from counties (such as the Fairfax County county-level data we accessed) can serve as \"truth\" in evaluating data quality (this data may have its own quality issues)"),
+                      tags$li("It is meaningful to compare property-level data (i.e. CoreLogic data) and survey aggregations (e.g. ACS data) (we had to make several assumptions in order to directly compare geographic levels of these data types)")
+                    ),
+                    p("Finally, it is worth noting that aggregated data can pose a greater threat to privacy than its individual counterpart. When working with a large proprietary dataset with personally identifiable information, such as the CoreLogic data, we have an ethical responsibility to maintain privacy and anonymity of individuals in our presentation of results.")
                   )
                   
                 )),
-        tabItem(tabName = "map",
+        tabItem(tabName = "vamap",
                 fluidRow(
                   boxPlus(
-                    title = "Interactive Map",
+                    title = "Virginia Map",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    width = NULL,
-                    enable_sidebar = TRUE,
-                    sidebar_width = 25,
-                    sidebar_start_open = TRUE,
-                    sidebar_content = tagList(p(),
-                                              actionButton("recalc", "Click Me!")),
-                    leafletOutput("mymap")
+                    width = NULL
                   ),
                   p("Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
                   br()
                 )),
-        tabItem(tabName = "graph",
+        tabItem(tabName = "vatable",
                 fluidRow(
                   boxPlus(
-                    title = "Interactive Graph",
+                    title = "Virginia Table",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    width = NULL,
-                    enable_sidebar = TRUE,
-                    sidebar_width = 25,
-                    sidebar_start_open = TRUE,
-                    sidebar_content = sliderInput(
-                      "obs",
-                      "Number of observations:",
-                      min = 0,
-                      max = 1000,
-                      value = 500
-                    ),
-                    plotOutput("distPlot")
+                    width = NULL
                   ),
                   p("Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
                   br()
-                )),
-        tabItem(tabName = "both",
-                fluidRow(
-                  boxPlus(
-                    title = "Interactive Graph",
-                    closable = FALSE,
-                    status = "warning",
-                    solidHeader = TRUE,
-                    collapsible = TRUE,
-                    width = 6,
-                    enable_sidebar = TRUE,
-                    sidebar_width = 25,
-                    sidebar_start_open = TRUE,
-                    sidebar_content = tagList(sliderInput(
-                      "obs2",
-                      "Number of observations:",
-                      min = 0,
-                      max = 1000,
-                      value = 500
-                    )
-                    ),
-                    plotOutput("distPlot2"),
-                    footer = "Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."
-                  ),
-                  boxPlus(
-                    title = "Interactive Map",
-                    closable = FALSE,
-                    status = "warning",
-                    solidHeader = TRUE,
-                    collapsible = TRUE,
-                    width = 6,
-                    enable_sidebar = TRUE,
-                    sidebar_width = 25,
-                    sidebar_start_open = TRUE,
-                    sidebar_content = tagList(
-                      p(),
-                      actionButton("recalc2", "Click Me!")
-                      ),
-                    leafletOutput("mymap2"),
-                    footer = "Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."
-                  )
                 )),
         tabItem(tabName = "data",
                 fluidRow(
@@ -219,18 +153,25 @@ Assumptions: housing units are defined similarly across counties and geographica
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     h2("Data Sources"),
-                    img(src = "data_sets.png", width = "450px", align = "right"),
-                    h3("Data Source 1"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
-                    h3("Data Source 2"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
-                    h3("Data Source 3"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    h3("CoreLogic Property Data"),
+                    p("Include years covered, variables used in analysis, and elaborate on the specific corelogic dataset. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    h3("American Community Survey"),
+                    p("Include years covered (what survey was used) variables (tables) used, and explain geographic areas (tracts) and general ACS process. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    h3("Fairfax County Data"),
+                    p("Include years covered, source of data, and variables included. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    h3("New Kent County Data"),
+                    p("Include years covered, source of data, and variables included."),
+                    h3("RUCA codes"),
+                    p("Include years covered, source of data, and variables included."),
                     h2("Methodology"),
-                    h3("Data Preparation"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
-                    h3("Data Modeling"),
-                    p("Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante.")
+                    h3("Geocoding"),
+                    p("Elaborate on geocoding process and record linkage attempts. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    h3("ACS Linkage"),
+                    p("Elaborate on linking ACS data (assumptions made, variables chosen). Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    h3("Fitness-for-Use Metric"),
+                    p("Explain fitness for use metric in greater detail."),
+                    h3("References"),
+                    p("Link at least the census paper, any package documentation, anything relevant from our literature review.")
                   )
                 )),
     
@@ -350,9 +291,7 @@ Assumptions: housing units are defined similarly across counties and geographica
                     collapsible = TRUE,
                     p("[Photos go about here.]"),
                     h2("Project Sponsors"),
-                    p("[Photos, information, and/or links about your sponsor go about here. You may want to use materials that your sponsors have already shared with you about their institution or coordinate with your stakeholders to include pertinent information here.]"),
-                    h2("Acknowledgements"),
-                    p("[Optional: You can also include external collaborators in this section or a separate section.]")
+                    p("[Photos, information, and/or links about your sponsor go about here. You may want to use materials that your sponsors have already shared with you about their institution or coordinate with your stakeholders to include pertinent information here.]")
                   )
                 ))
       )
@@ -371,32 +310,6 @@ Assumptions: housing units are defined similarly across counties and geographica
     # Render Plot 2
     output$distPlot2 <- renderPlot({
       hist(rnorm(input$obs2))
-    })
-    
-    # Create Map Points 1
-    points <- eventReactive(input$recalc, {
-      cbind(rnorm(40) * 2 + 13, rnorm(40) + 48)
-    }, ignoreNULL = FALSE)
-    
-    # Render Map 1
-    output$mymap <- renderLeaflet({
-      leaflet() %>%
-        addProviderTiles(providers$Stamen.TonerLite,
-                         options = providerTileOptions(noWrap = TRUE)) %>%
-        addMarkers(data = points())
-    })
-    
-    # Create Map Points 2
-    points2 <- eventReactive(input$recalc2, {
-      cbind(rnorm(40) * 2 + 13, rnorm(40) + 48)
-    }, ignoreNULL = FALSE)
-    
-    # Render Map 2
-    output$mymap2 <- renderLeaflet({
-      leaflet() %>%
-        addProviderTiles(providers$Stamen.TonerLite,
-                         options = providerTileOptions(noWrap = TRUE)) %>%
-        addMarkers(data = points2())
     })
     
    
