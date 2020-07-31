@@ -17,9 +17,16 @@ library(leaflet)
 library(readr)
 library(tigris)
 library(tidyr)
+```
 
+```{r}
 ffu_va <- read_csv("~/git/dspg20broadbandERS/data/acs-cl-joined/ffu_va.csv")
 #nrow(filter(ffu_va, is.na(ffu_housing_units_total))) #559 tracts with no data
+ruca <- read_csv("~/git/dspg20broadbandERS/data/census-geographies/RUCA.csv")
+
+ffu_va <- ffu_va %>% 
+  dt_mutate(GEOID = as.character(GEOID)) %>%
+  left_join(ruca)
 
 va_tracts <- tracts(state = '51', year = 2018)
 ffu_merged <- geo_join(va_tracts, ffu_va, "GEOID", "GEOID")
@@ -40,8 +47,6 @@ ggplot(ffu_va_yrbuilt, aes(ffu, variable)) + geom_boxplot() + geom_vline(xinterc
 ggplot(ffu_va_housing, aes(ffu, variable)) + geom_boxplot() + geom_vline(xintercept = -1, linetype = "dashed", color = "red") + geom_vline(xintercept = 1, linetype = "dashed", color = "red")
 ```
 
-
-
 ```{r}
 plot(density(na.omit(ffu_va$ffu_housing_units_total)))
 quantile(na.omit(ffu_va$ffu_housing_units_total))
@@ -52,8 +57,13 @@ quantile(na.omit(ffu_va$ffu_housing_units_total), probs = seq(0, 1, length.out =
 #range(na.omit(ffu_va$ffu_housing_units_total)) # -98 to 46
 bins <- c(-100, -10, -5, -2, -1, 1, 2, 5, 10, 100)
 pal <- colorBin(palette = "BrBG", domain = ffu_merged$ffu_housing_units_total, bins = bins)
-popup <- paste0("GEOID: ", ffu_merged$GEOID, "<br>", "Fitness for Use: ", round(ffu_merged$ffu_housing_units_total, 2))
-label <- paste("GEOID: ", ffu_merged$GEOID, "<br/>", "Fitness for Use: ", round(ffu_merged$ffu_housing_units_total, 2), sep = "") %>%
+#popup <- paste0("GEOID: ", ffu_merged$GEOID, "<br>", "Fitness for Use: ", round(ffu_merged$ffu_housing_units_total, 2))
+label <- paste(ffu_merged$County, "<br/>", 
+               "RUCA Code: ", ffu_merged$RUCA1, "<br/>", 
+               "Fitness for Use: ", ifelse(test = is.na(ffu_merged$ffu_housing_units_total), 
+                                           yes = "no data", 
+                                           no = round(ffu_merged$ffu_housing_units_total, 2)), 
+               sep = "") %>%
   lapply(htmltools::HTML)
 
 ffu_map <- leaflet() %>%
