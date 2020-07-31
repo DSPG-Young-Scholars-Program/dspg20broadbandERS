@@ -11,9 +11,12 @@ source("theme.R")
 
 va_table_long <- read_csv('data/va_table_long.csv')
 vacounties <- unique(va_table_long$County)
+
 ffu_va_value <- va_table_long %>% filter(str_detect(variable, "value"))
 ffu_va_yrbuilt <- va_table_long %>% filter(str_detect(variable, "yrbuilt"))
 ffu_va_housing <- va_table_long %>% filter(str_detect(variable, "housing|occ"))
+
+ruca_def <- read_csv('data/ruca_def.csv')
 
 shinyApp(
   ui = dashboardPagePlus(
@@ -180,20 +183,30 @@ shinyApp(
                     collapsible = TRUE,
                     h2("Data Sources"),
                     h3("CoreLogic Property Data"),
-                    p("Include years covered, variables used in analysis, and elaborate on the specific corelogic dataset. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
-                    h3("American Community Survey"),
-                    p("Include years covered (what survey was used) variables (tables) used, and explain geographic areas (tracts) and general ACS process. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    p("CoreLogic is a commercial data aggregator focused on property data. We had access to several CoreLogic datasets for use in this project, but focused on tax assessment data purchased by SDAD."),
+                    p("While multiple years of tax assessment data were available, we limited the data to properties assessed in 2018 for consistency across the other datasets we were using. While we profiled all the available CoreLogic variables initially, our final analysis and ACS comparisons focused on the number of bedrooms, the assessed total value, the year a property was built, and the property type. We additionally used the census tract and FIPS variables in the CoreLogic data to enable merging with ACS estimates. For our geocoding analysis, we also focused on the latitude and longitude of a property."),
+                    h3("American Community Survey (ACS)"),
+                    p("The American Community Survey (ACS) is an ongoing survey performed by the US Census Bureau that asks more detailed demographic questions about individuals than the decennial census. ACS data includes housing information as provided by individuals. Estimates are reported at varying levels of geography and accuracy; one-year ACS estimates are assumed to be less accurate than five-year ACS estimates, but are provided more often."),
+                    p("Our analysis used the 2018 five-year ACS estimates at the census tract level. We used estimates of the number of housing units in the tract, whether that housing unit was vacant or occupied, and the year a housing unit was built, and the value of a housing unit for comparison with CoreLogic."),
                     h3("Fairfax County Data"),
-                    p("Include years covered, source of data, and variables included. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    p("Fairfax County provides property assessment data on its open data platform. We used data that had been collected from this platform in 2018 that included 18 property variables."),
+                    p("While we profiled the full Fairfax data, for our analysis, we focused on the variables for property type, assessed value, year built, number of bedrooms, number of bathrooms, lot size, and square footage. The county also provided information on the latitude and longitude of a property, so geocoding this dataset was not necessary."),
                     h3("New Kent County Data"),
-                    p("Include years covered, source of data, and variables included."),
-                    h3("RUCA codes"),
-                    p("Include years covered, source of data, and variables included."),
+                    p("New Kent County provides property assessment data on their website as a downloadable Excel file. We downloaded the most recent version of this data, which was the 2020 property tax assessments for the county."),
+                    p("While we profiled the full New Kent data, for our analysis, we focused on the variables for assessed value, year built, number of bedrooms, number of bathrooms, lot size, and square footage. New Kent County did not provide a property type variable or latitude and longitude."),
+                    h3("Rural-Urban Commuting Area (RUCA) Codes"),
+                    p("Rural-Urban Commuting Area (RUCA) Codes categorize census tracts based on their population density and commuting flows. They are a product of the United States Department of Agriculture Economic Research Service."),
+                    p('We used RUCA codes to classify census tracts as urban or rural. While the codes range from one to ten (see table below for further definitions) we considered /"rural/" tracts as tracts with codes seven or higher.'),
+                    p('ADD TABLE OUTPUT -- ASK'),
+                    #tableOutput(rucatable),
                     h2("Methodology"),
                     h3("Geocoding"),
                     p("Elaborate on geocoding process and record linkage attempts. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
                     h3("ACS Linkage"),
-                    p("Elaborate on linking ACS data (assumptions made, variables chosen). Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    p("ACS provides estimates of counts for a selected geography (in our case, counts in a given census tract), while CoreLogic provides property-level data. Some assumptions were therefore necessary in order to match counts of CoreLogic property characteristics to ACS estimates."),
+                    p('To get the overall count of housing units and the occupancy status for each tract, we considered properties in CoreLogic that were coded as single family dwellings, condos, duplexes, apartments, or commercial condos to be "residential" properties. These residential properties were summed by census tract to get the "occupied" count, and properties coded in CoreLogic as "vacant" were summed to get the "vacant" count. "Total housing units" were considered to be the sum of the occupied and vacant counts.'),
+                    p('To get the count of the year built variables, CoreLogic data was grouped based on its year built. The bins were constructed to match ACS bins; for example, a property constructed in 1975 would be grouped in the "1970-1979" year-built bin. The properties in each bin were then counted for each census tract'),
+                    p('To get the count of the housing value variables, CoreLogic data was grouped based on its assessed total value variable. The bins were constructed to match ACS bins; for example, a property valued at $120,000 would be grouped in the "125,000 - 150,000" value bin. The properties in each bin were then counted for each census tract.'),
                     h3("Fitness-for-Use Metric"),
                     p("Explain fitness for use metric in greater detail."),
                     h3("References"),
@@ -241,33 +254,7 @@ shinyApp(
                                img(src = "Missing_nk.png", width = "360px", align = "left"),
                                img(src = "Missing_cl_nk.png", width = "360px", align = "right"),
                                img(src = "nk_hist.png", width = "360px", align = "left"))
-                       ),
-               #                      boxPlus(
-               #                        title = "Geocoding",
-               #                        closable = FALSE,
-               #                        width = NULL,
-               #                        status = "warning",
-               #                        solidHeader = TRUE,
-               #                        collapsible = TRUE
-               #                        ,
-               #                        p("Something Something")
-               #                      ),
-               #                      boxPlus(
-               #                        title = "Missing values in the latitude and longitude variables",
-               #                        closable = FALSE,
-               #                        width = NULL,
-               #                        status = "warning",
-               #                        solidHeader = FALSE,
-               #                        collapsible = FALSE,
-               #                        h3("Missing in CoreLogic data"),
-               #                        img(src = "lat_long_cl_ffx.png", width = "700px"),
-               #                        img(src = "lat_long_cl_nk.png", width = "700px"),
-               #                        h3("Missing in county data"),
-               #                        img(src = "ffx_lat_long.png", width = "700pxpx"),
-               #                        p("NOTE: The New kent county dataset does not have any latitude and longitude variables, and so the entire dataset had to be gecoded as compared to just some parts in the other datasets.")
-               #                      )),
-               #             tabPanel("Metrics")   
-               #)
+                       ) #************
                 ),
         tabItem(tabName = "team",
                 fluidRow(
@@ -386,7 +373,11 @@ shinyApp(
           columns = 5,
           backgroundColor = styleEqual(c(0, 1), c('gray', 'yellow'))
         )
-    }) 
+    })
+    
+    output$rucatable <- renderTable({
+      ruca_def
+    })
    
   }
 ) 
