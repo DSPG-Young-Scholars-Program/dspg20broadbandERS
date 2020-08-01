@@ -12,6 +12,15 @@ source("theme.R")
 font = 'Arial'
 
 va_table_long <- read_csv('data/va_table_long.csv')
+va_table_wide <- read_csv('data/va_table_wide.csv')
+
+vacounties_df <- va_table_wide %>%
+  mutate(pctrural_label = paste0(round(percent_rural*100, 1), '% rural'),
+         nodata_label = ifelse(mean_ffu_housing_units_total == 'NaN', ', No Data Available', ""),
+         full_label = paste0(County, ', ', pctrural_label, nodata_label)) %>%
+  dplyr::select(full_label)
+
+vacounties_labels <- unique(vacounties_df$full_label)
 vacounties <- unique(va_table_long$County)
 
 va_table_long <- va_table_long %>% 
@@ -203,14 +212,14 @@ shinyApp(
                     solidHeader = TRUE,
                     collapsible = FALSE,
                     width = NULL,
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots will be blank.'),
                     selectInput(
                       inputId = 'vacty',
                       label = 'Select a Virginia County',
-                      choices = vacounties),
-                    uiOutput("ruralText"),
-                    p("The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the table and plots below are blank, we were unable to calculate the fitness-for-use as a result of this missing data.")),
+                      choices = vacounties_labels),
+                    uiOutput("ruralText")),
                   boxPlus(
-                    title = "County Table",
+                    title = "County Table - All Variables",
                     closable = FALSE,
                     status = 'warning',
                     solidHeader = TRUE,
@@ -397,8 +406,9 @@ shinyApp(
     
     # Render Housing Plot
     output$ctyhousing <- renderPlot({
+      filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- ffu_va_housing %>%
-        filter(County == input$vacty) %>%
+        filter(County == filtervar) %>%
         filter(variable != 'Percent Rural')
       cty %>%
         ggplot(aes(value, variable)) + 
@@ -406,7 +416,7 @@ shinyApp(
         geom_vline(xintercept = -1, linetype = "dashed", color = "#E57200") + 
         geom_vline(xintercept = 1, linetype = "dashed", color = "#E57200") +
         theme_minimal() +
-        labs(title = paste('Fitness-for-Use by Housing Type in', 'Albemarle County'),
+        labs(title = paste('Fitness-for-Use by Housing Type in', filtervar),
              subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
              caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
         xlab('Average Fitness-for-Use Value') + 
@@ -417,8 +427,9 @@ shinyApp(
     
     # Render Value Plot
     output$ctyvalue <- renderPlot({
+      filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- ffu_va_value %>%
-        filter(County == input$vacty) %>%
+        filter(County == filtervar) %>%
         filter(variable != 'Percent Rural')
       cty %>%
         ggplot(aes(value, variable)) + 
@@ -426,7 +437,7 @@ shinyApp(
         geom_vline(xintercept = -1, linetype = "dashed", color = "#E57200") + 
         geom_vline(xintercept = 1, linetype = "dashed", color = "#E57200") +
         theme_minimal() +
-        labs(title = paste('Fitness-for-Use by Property Value in', 'Albemarle County'),
+        labs(title = paste('Fitness-for-Use by Property Value in', filtervar),
              subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
              caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
         xlab('Average Fitness-for-Use Value') + 
@@ -437,8 +448,9 @@ shinyApp(
     
     # Render Year Built Plot
     output$ctyyrbuilt <- renderPlot({
+      filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- ffu_va_yrbuilt %>%
-        filter(County == input$vacty) %>%
+        filter(County == filtervar) %>%
         filter(variable != 'Percent Rural')
       cty %>%
         ggplot(aes(value, variable)) + 
@@ -446,7 +458,7 @@ shinyApp(
         geom_vline(xintercept = -1, linetype = "dashed", color = "#E57200") + 
         geom_vline(xintercept = 1, linetype = "dashed", color = "#E57200") +
         theme_minimal() +
-        labs(title = paste('Fitness-for-Use by Year Built in', 'Albemarle County'),
+        labs(title = paste('Fitness-for-Use by Year Built in', filtervar),
              subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
              caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
         xlab('Average Fitness-for-Use Value') + 
@@ -456,19 +468,21 @@ shinyApp(
     })
     
     output$ruralText <- renderUI({
+      filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- va_table_long %>%
-        filter(County == input$vacty) %>%
+        filter(County == filtervar) %>%
         filter(variable == 'Percent Rural')
       pctrural <- round(cty$value*100,1)
 
-      h4(paste(input$vacty, 
+      h3(paste(filtervar, 
                " is ", pctrural, " percent rural based on the census tracts it contains.", 
                sep = ""))
     })
     
     output$countyTable <- DT::renderDataTable({
+      filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- va_table_long %>%
-        filter(County == input$vacty) %>%
+        filter(County == filtervar) %>%
         dplyr::select(-County) %>%
         filter(variable != 'Percent Rural') %>%
         mutate(good = ifelse(abs(value) <= 1, 1, 0)) %>%
