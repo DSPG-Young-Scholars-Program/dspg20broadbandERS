@@ -47,35 +47,6 @@ loc.validate_address <- function(id = "",
 }
 
 
-loc.validate_address <- function(id = "",
-                                 address_1 = "",
-                                 address_2 = "5141 HOPEWELL RD",  #"1100 Wilson Blvd",
-                                 city =  "NEW KENT", #"Arlington",
-                                 state = "VA",
-                                 zip5 = "23124", #"",
-                                 zip4 = "",
-                                 full_info = TRUE,
-                                 usps_userid = "789UNIVE1553") {
-    # if (full_info == TRUE) rev <- 1 else rev <- 0
-    url <- paste0("https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=<AddressValidateRequest USERID=\"", usps_userid, "\">
-        <Revision>", 1,"</Revision>
-        <Address>
-            <Address1>", address_1,"</Address1>
-            <Address2>", address_2,"</Address2>
-            <City>", city,"</City>
-            <State>", state,"</State>
-            <Zip5>", zip5,"</Zip5>
-            <Zip4>", zip4,"</Zip4>
-        </Address>
-        </AddressValidateRequest>") %>%
-        stringr::str_replace_all("(\n|\\s+)", " ") %>%
-        utils::URLencode()
-    ls <- xml2::as_list(xml2::read_xml(url))
-    final <- t(as.data.frame(lapply(ls$AddressValidateResponse, unlist)))
-    final <- final %>% bind_cols(rowid = id)
-    final
-}
-
 # loc.validate_address(address_2 = "2 Maidens Bower Court", city = "Potomac", state = "MD", zip5 = "20854")
 ```
 
@@ -432,6 +403,8 @@ cty_prep_to_match_PASS4  %>% filter(Zip5 == "23181") %>% .$Address2 %>% unique
 cl_prep_to_match_PASS4 %>% filter(Zip5 == "23181") %>% .$Address2 %>% unique
 
 ```
+
+
 ```{r}
 data.frame( #"PHASE" = c("A", "A", "A", "B", "B", "B"),
            "STEP" = c("Preparation", "SET ASIDE - Address Repeats", "Non Repeats", 
