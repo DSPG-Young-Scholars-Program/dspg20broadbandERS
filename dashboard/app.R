@@ -69,7 +69,7 @@ ffu_va_value <- va_table_long %>% filter(str_detect(variable, "Value"))
 ffu_va_yrbuilt <- va_table_long %>% filter(str_detect(variable, "Built"))
 ffu_va_housing <- va_table_long %>% filter(str_detect(variable, "Units"))
 
-ruca_def <- read_csv('data/ruca_def.csv')
+ruca_def <- read_csv('data/ruca_def.csv', col_types = cols(Code = col_factor()))
 
 shinyApp(
   ui = dashboardPagePlus(
@@ -120,6 +120,8 @@ shinyApp(
       customTheme,
       fluidPage(
       tabItems(
+
+# OVERVIEW----------------------------------------------------------------------------------------
         tabItem(tabName = "overview",
                 fluidRow(
                   boxPlus(
@@ -190,6 +192,8 @@ shinyApp(
                   )
                   
                 )),
+
+# VIRGINIA MAP ------------------------------------------------------------------------------------
         tabItem(tabName = "vamap",
                 fluidRow(
                   boxPlus(
@@ -203,6 +207,8 @@ shinyApp(
                   p("Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
                   br()
                 )),
+
+# VIRGINIA TABLE  ---------------------------------------------------------------------------------
         tabItem(tabName = "vatable",
                 fluidRow(
                   boxPlus(
@@ -256,53 +262,101 @@ shinyApp(
                   ),
                   br()
                 )),
+        
+# DATA AND METHODOLOGY ---------------------------------------------------------------------------
         tabItem(tabName = "data",
                 fluidRow(
                   boxPlus(
-                    title = "Data & Methodology",
+                    title = "Data Sources",
                     closable = FALSE,
                     width = NULL,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    h2("Data Sources"),
+                    
                     h3("CoreLogic Property Data"),
-                    p("CoreLogic is a commercial data aggregator focused on property data. We had access to several CoreLogic datasets for use in this project, but focused on tax assessment data purchased by SDAD."),
-                    p("While multiple years of tax assessment data were available, we limited the data to properties assessed in 2018 for consistency across the other datasets we were using. While we profiled all the available CoreLogic variables initially, our final analysis and ACS comparisons focused on the number of bedrooms, the assessed total value, the year a property was built, and the property type. We additionally used the census tract and FIPS variables in the CoreLogic data to enable merging with ACS estimates. For our geocoding analysis, we also focused on the latitude and longitude of a property."),
+                    p("CoreLogic is a supplier of proprietary US real estate and specialized business data at the property level. This company provides data spanning over 50 years at the latitude and longitude level. Information available in the dataset includes property characteristics, mortgage, foreclosures and performance. We used the tax assessment data purchased by the Social and Decision Analytics Division  for 2018."),
+                    #p("While multiple years of tax assessment data were available, we limited the data to properties assessed in 2018 for consistency across the other datasets we were using. While we profiled all the available CoreLogic variables initially, our final analysis and ACS comparisons focused on the number of bedrooms, the assessed total value, the year a property was built, and the property type. We additionally used the census tract and FIPS variables in the CoreLogic data to enable merging with ACS estimates. For our geocoding analysis, we also focused on the latitude and longitude of a property."),
+                    
                     h3("American Community Survey (ACS)"),
-                    p("The American Community Survey (ACS) is an ongoing survey performed by the US Census Bureau that asks more detailed demographic questions about individuals than the decennial census. ACS data includes housing information as provided by individuals. Estimates are reported at varying levels of geography and accuracy; one-year ACS estimates are assumed to be less accurate than five-year ACS estimates, but are provided more often."),
-                    p("Our analysis used the 2018 five-year ACS estimates at the census tract level. We used estimates of the number of housing units in the tract, whether that housing unit was vacant or occupied, and the year a housing unit was built, and the value of a housing unit for comparison with CoreLogic."),
+                    p("The American Community Survey (ACS) is an ongoing yearly survey conducted by the U.S Census Bureau. ACS samples households to compile 1-year and 5-year datasets providing information on population sociodemographic and socioeconomic characteristics including housing data. We used ACS 5-year (2014-18) estimates to obtain census tract and census block group-level to explore Virginia housing data. Data were accessed using the `tidycensus` package."),
+                    #p("Our analysis used the 2018 five-year ACS estimates at the census tract level. We used estimates of the number of housing units in the tract, whether that housing unit was vacant or occupied, and the year a housing unit was built, and the value of a housing unit for comparison with CoreLogic."),
+                    
                     h3("Fairfax County Data"),
                     p("Fairfax County provides property assessment data on its open data platform. We used data that had been collected from this platform in 2018 that included 18 property variables."),
-                    p("While we profiled the full Fairfax data, for our analysis, we focused on the variables for property type, assessed value, year built, number of bedrooms, number of bathrooms, lot size, and square footage. The county also provided information on the latitude and longitude of a property, so geocoding this dataset was not necessary."),
+                    p("We profiled the 18 variables in the Fairfax dataset. For our analysis, we focused on the following variables of interest:"),
+                    tags$ul(
+                      tags$li("Assessed Value"),
+                      tags$li("Year Built"),
+                      tags$li("Square Footage"),
+                      tags$li("Lot Size"),
+                      tags$li("Number of Bedrooms"),
+                      tags$li("Number of Bathrooms"),
+                      tags$li("Property Type")),
+                    p("The county also provided information on the latitude and longitude of a property, so geocoding this dataset was not necessary."),
+                    #p("While we profiled the full Fairfax data, for our analysis, we focused on the variables for property type, assessed value, year built, number of bedrooms, number of bathrooms, lot size, and square footage. The county also provided information on the latitude and longitude of a property, so geocoding this dataset was not necessary."),
+                    
                     h3("New Kent County Data"),
                     p("New Kent County provides property assessment data on their website as a downloadable Excel file. We downloaded the most recent version of this data, which was the 2020 property tax assessments for the county."),
-                    p("While we profiled the full New Kent data, for our analysis, we focused on the variables for assessed value, year built, number of bedrooms, number of bathrooms, lot size, and square footage. New Kent County did not provide a property type variable or latitude and longitude."),
-                    h3("Rural-Urban Commuting Area (RUCA) Codes"),
+                    p("We profiled the full New Kent data. For our analysis, we focused on the following variables:"),
+                    tags$ul(
+                      tags$li("Assessed Value"),
+                      tags$li("Year Built"),
+                      tags$li("Square Footage"),
+                      tags$li("Lot Size"),
+                      tags$li("Number of Bedrooms"),
+                      tags$li("Number of Bathrooms")),
+                    p("New Kent County did not provide a property type variable or latitude and longitude. See description of geocoding in the Methodology section."),
+                    
+                    h3(tags$a(href="https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes.aspx", "Rural-Urban Commuting Area (RUCA) Codes")),
                     p("Rural-Urban Commuting Area (RUCA) Codes categorize census tracts based on their population density and commuting flows. They are a product of the United States Department of Agriculture Economic Research Service."),
-                    p('We used RUCA codes to classify census tracts as urban or rural. While the codes range from one to ten (see table below for further definitions) we considered /"rural/" tracts as tracts with codes seven or higher.'),
-                    tableOutput('rucatable'),
-                    h2("Methodology"),
+                    p('We used RUCA codes to classify census tracts as urban or rural. While the codes range from one to ten (see table below for further definitions) we considered "rural" tracts as tracts with codes seven or higher.'),
+                    tableOutput('rucatable')),
+                  
+                  boxPlus(
+                    title = "Methodology",
+                    closable = FALSE,
+                    width = NULL,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    
                     h3("Geocoding"),
                     p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access the Census geocoder and geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
                     p("However, a direct join of the data on the latitude and longitude was not possible because of the differences in the geocoding of the data. CoreLogic's method for geocoding places the location in the center of the property, while the Census geocoder places the location where the property mailbox is located. For larger parcels, these locations can be quite different."),
-                    p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
-                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, it seems that some combination of manual encoding and encoding with the API would be necessary to join more of the data, and we decided continuing with this method would be beyond the scope of this project. Instead, we present our data profiling results for the county data as another comparison to CoreLogic."),
+                    p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance() function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
+                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, this would require a combination of manual encoding and encoding with the API to join more of the data. Instead, we present our data profiling results for the county data as another comparison to CoreLogic."),
+                    
                     h3("ACS Linkage"),
                     p("ACS provides estimates of counts for a selected geography (in our case, counts in a given census tract), while CoreLogic provides property-level data. Some assumptions were therefore necessary in order to match counts of CoreLogic property characteristics to ACS estimates."),
                     p('To get the overall count of housing units and the occupancy status for each tract, we considered properties in CoreLogic that were coded as single family dwellings, condos, duplexes, apartments, or commercial condos to be "residential" properties. These residential properties were summed by census tract to get the "occupied" count, and properties coded in CoreLogic as "vacant" were summed to get the "vacant" count. "Total housing units" were considered to be the sum of the occupied and vacant counts.'),
-                    p('To get the count of the year built variables, CoreLogic data was grouped based on its year built. The bins were constructed to match ACS bins; for example, a property constructed in 1975 would be grouped in the "1970-1979" year-built bin. The properties in each bin were then counted for each census tract'),
-                    p('To get the count of the housing value variables, CoreLogic data was grouped based on its assessed total value variable. The bins were constructed to match ACS bins; for example, a property valued at $120,000 would be grouped in the "125,000 - 150,000" value bin. The properties in each bin were then counted for each census tract.'),
+                    p('To get the count of the year built variables, CoreLogic data were grouped based on its year built. The bins were constructed to match ACS bins; for example, a property constructed in 1975 would be grouped in the "1970-1979" year-built bin. The properties in each bin were then counted for each census tract'),
+                    p('To get the count of the housing value variables, CoreLogic data were grouped based on its assessed total value variable. The bins were constructed to match ACS bins; for example, a property valued at $130,000 would be grouped in the "125,000 - 150,000" value bin. The properties in each bin were then counted for each census tract.'),
+                    
                     h3("Fitness-for-Use Metric"),
                     p('One challenge of evaluating the coverage of CoreLogic data is that there is no "gold standard" comparison. While ACS data is rigorously collected and evaluated, it is still survey data and may be unreliable, particularly in the rural areas we are most interested in. CoreLogic data may be more accurate than ACS data for variables that are more consistently reported in tax assessments than by individuals on a survey. Therefore, we need to make comparisons in a way that accounts for these differences in the datasets while also providing information about how these differences are exhibited.'),
-                    p('We use the following "fitness-for-use" metric to make these comparisons.'),
+                    p('We use the following "fitness-for-use" metric to make these comparisons (Keller, Shipp, Orr, et al. 2016).'),
                     (img(src = "ffu_equation.png", width = 370, height = 50)),
-                    p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicatse that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.'),
-                    h3("References"),
-                    p("Link at least the census paper, any package documentation, anything relevant from our literature review.")
-                  )
+                    p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicatse that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.')
+                  ),
+                  boxPlus(
+                    title = "References",
+                    closable = FALSE,
+                    width = NULL,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    
+                    p("Cambon, J. 2020. tidygeocoder: Tidyverse-Style Interface for Geocoding. R packageversion 0.2.5. https://CRAN.R-project.org/package=tidygeocoder"),
+                    p("Keller, S. and Shipp, S., Orr, M., et. al. 2016. Leveraging External Data Sources to Enhance Official Statistics and Products.  Report prepared for the U.S. Census Bureau. Social and Decision Analytics Laboratory (SDAL), Biocomplexity Institute of Virginia Tech."),
+                    p("Pebesma, E., 2018. Simple Features for R: Standardized Support for Spatial Vector Data. The R Journal 10 (1), 439-446, https://doi.org/10.32614/RJ-2018-009"),
+                    p("USPS Web Tools Application Programming Interface User Guide. (2020, June 6). USPS.Com. https://www.usps.com/business/web-tools-apis/address-information-api.htm"),
+                    p("Walker, K. 2020. tidycensus: Load US Census Boundary and Attribute Data as 'tidyverse' and 'sf'-Ready Data Frames. R package version 0.9.9.5. https://CRAN.R-project.org/package=tidycensus")
+                  
+                )
                 )),
-    
+
+# PROFILING -------------------------------------------------------------------------------------------
         tabItem(tabName = "profiling",
                 fluidRow(
                         boxPlus(title = "Data Profiling",
@@ -311,7 +365,7 @@ shinyApp(
                                 status = "warning",
                                 solidHeader = TRUE,
                                 collapsible = TRUE,
-                                p("We profiled the Fairfax and New Kent county subsets of the CoreLogic housing data, and the Fairfax county and New Kent county datasets, obtained direclty from the county websites.
+                                p("We profiled the CoreLogic data subset for Fairfax County and New Kent County in Virginia. In addition, we profiled local Fairfax County and New Kent County property data. The profiling goal was to compare the completeness of the variables included in each dataset.
                                    Our profiling process focused on the six variables that our sponsors at the USDA highlighted as having the greatest effect on property prices:"),
                                 tags$ul(
                                     tags$li("Lot Size"),
@@ -343,8 +397,10 @@ shinyApp(
                                img(src = "Missing_nk.png", width = "360px", align = "left"),
                                img(src = "Missing_cl_nk.png", width = "360px", align = "right"),
                                img(src = "nk_hist.png", width = "360px", align = "left"))
-                       ) #************
+                       )
                 ),
+
+# TEAM -------------------------------------------------------------------------------------------
         tabItem(tabName = "team",
                 fluidRow(
                   boxPlus(
