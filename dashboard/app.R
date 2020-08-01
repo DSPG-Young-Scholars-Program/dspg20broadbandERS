@@ -113,7 +113,7 @@ shinyApp(
                     h4("Data Profiling"),
                     p("We profiled the CoreLogic data subset for Fairfax County and New Kent County in Virginia, in addition to the Fairfax County and New Kent County property data, to compare the completeness and variables included in each dataset."),
                     h4("Data Preparation and Linkage"),
-                    p("We used the Census geocoder to geocode the subsets of the CoreLogic data for Fairfax and New Kent that did not have a property-level latitude and longitude. We also geocoded the New Kent County data as latitude and longitude was not provided in the original data. We attempted record linkage between the county and CoreLogic data and learned that linkage on latitude and longitude may not be possible given the way latitudes and longitudes in the CoreLogic data were generated."),
+                    p("We used the Census geocoder to geocode the subsets of the CoreLogic data for Fairfax and New Kent that did not have a property-level latitude and longitude. We also geocoded the New Kent County data as latitude and longitude was not provided in the original data. We attempted record linkage between the county and CoreLogic data and learned that linkage on raw latitude and longitude is not possible because CoreLogic data records a latitude and longitude in the middle of the parcel, while the geocoder we used places the latitude and longitude at the border of the property. We discuss further record linkage attempts in the methodology section."),
                     p("We additionally grouped the CoreLogic data by census tract and created equivalent variables to ACS estimates for total housing counts, vacancy status, year built, and assessed property value. We then linked these estimates at the census tract level and began exploring the differences between CoreLogic and ACS estimates."),
                     h4("Statistical Analysis"),
                     p("Using the linked CoreLogic and ACS data, we benchmarked the CoreLogic data using a \"fitness-for-use\" metric derived from a previous Census partnership. This is discussed more in the methodology section. The fitness-for-use metric takes into account both the ACS estimate and the ACS margin of error when comparing with the CoreLogic values.")
@@ -197,18 +197,23 @@ shinyApp(
                     h3("Rural-Urban Commuting Area (RUCA) Codes"),
                     p("Rural-Urban Commuting Area (RUCA) Codes categorize census tracts based on their population density and commuting flows. They are a product of the United States Department of Agriculture Economic Research Service."),
                     p('We used RUCA codes to classify census tracts as urban or rural. While the codes range from one to ten (see table below for further definitions) we considered /"rural/" tracts as tracts with codes seven or higher.'),
-                    p('ADD TABLE OUTPUT -- ASK'),
-                    #tableOutput(rucatable),
+                    tableOutput('rucatable'),
                     h2("Methodology"),
                     h3("Geocoding"),
-                    p("Elaborate on geocoding process and record linkage attempts. Example text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                    p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access the Census geocoder and geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
+                    p("However, a direct join of the data on the latitude and longitude was not possible because of the differences in the geocoding of the data. CoreLogic's method for geocoding places the location in the center of the property, while the Census geocoder places the location where the property mailbox is located. For larger parcels, these locations can be quite different."),
+                    p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
+                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, it seems that some combination of manual encoding and encoding with the API would be necessary to join more of the data, and we decided continuing with this method would be beyond the scope of this project. Instead, we present our data profiling results for the county data as another comparison to CoreLogic."),
                     h3("ACS Linkage"),
                     p("ACS provides estimates of counts for a selected geography (in our case, counts in a given census tract), while CoreLogic provides property-level data. Some assumptions were therefore necessary in order to match counts of CoreLogic property characteristics to ACS estimates."),
                     p('To get the overall count of housing units and the occupancy status for each tract, we considered properties in CoreLogic that were coded as single family dwellings, condos, duplexes, apartments, or commercial condos to be "residential" properties. These residential properties were summed by census tract to get the "occupied" count, and properties coded in CoreLogic as "vacant" were summed to get the "vacant" count. "Total housing units" were considered to be the sum of the occupied and vacant counts.'),
                     p('To get the count of the year built variables, CoreLogic data was grouped based on its year built. The bins were constructed to match ACS bins; for example, a property constructed in 1975 would be grouped in the "1970-1979" year-built bin. The properties in each bin were then counted for each census tract'),
                     p('To get the count of the housing value variables, CoreLogic data was grouped based on its assessed total value variable. The bins were constructed to match ACS bins; for example, a property valued at $120,000 would be grouped in the "125,000 - 150,000" value bin. The properties in each bin were then counted for each census tract.'),
                     h3("Fitness-for-Use Metric"),
-                    p("Explain fitness for use metric in greater detail."),
+                    p('One challenge of evaluating the coverage of CoreLogic data is that there is no "gold standard" comparison. While ACS data is rigorously collected and evaluated, it is still survey data and may be unreliable, particularly in the rural areas we are most interested in. CoreLogic data may be more accurate than ACS data for variables that are more consistently reported in tax assessments than by individuals on a survey. Therefore, we need to make comparisons in a way that accounts for these differences in the datasets while also providing information about how these differences are exhibited.'),
+                    p('We use the following "fitness-for-use" metric to make these comparisons.'),
+                    (img(src = "ffu_equation.png", width = 370, height = 50)),
+                    p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicatse that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.'),
                     h3("References"),
                     p("Link at least the census paper, any package documentation, anything relevant from our literature review.")
                   )
@@ -377,7 +382,7 @@ shinyApp(
     
     output$rucatable <- renderTable({
       ruca_def
-    })
+    }, striped = TRUE)
    
   }
 ) 
