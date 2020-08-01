@@ -6,6 +6,7 @@ library(leaflet)
 library(dashboardthemes)
 library(tidyverse)
 library(DT)
+library(gt)
 
 source("theme.R")
 
@@ -34,7 +35,8 @@ va_table_long <- va_table_long %>%
                                   'mean_value_15.20' = 'Value $15,000-$20,000',
                                   'mean_value_20.25' = 'Value $20,000-$25,000',
                                   'mean_value_25.30' = 'Value $25,000-$30,000',
-                                  'mean_value_35.40' = 'Value $30,000-$35,000',
+                                  'mean_value_30.35' = 'Value $30,000-$35,000',
+                                  'mean_value_35.40' = 'Value $35,000-$40,000',
                                   'mean_value_40.50' = 'Value $40,000-$50,000',
                                   'mean_value_50.60' = 'Value $50,000-$60,000',
                                   'mean_value_60.70' = 'Value $60,000-$70,000',
@@ -204,7 +206,7 @@ shinyApp(
                     collapsible = TRUE,
                     width = NULL
                   ),
-                  p("Explanatory text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam in varius purus. Nullam ut sodales ante."),
+                  h4('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation.'),
                   br()
                 )),
 
@@ -218,21 +220,13 @@ shinyApp(
                     solidHeader = TRUE,
                     collapsible = FALSE,
                     width = NULL,
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots will be blank.'),
+                    h4('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots will be blank.'),
                     selectInput(
                       inputId = 'vacty',
                       label = 'Select a Virginia County',
-                      choices = vacounties_labels),
+                      choices = vacounties_labels,
+                      selected = 'Albemarle County, 0% rural'),
                     uiOutput("ruralText")),
-                  boxPlus(
-                    title = "County Table - All Variables",
-                    closable = FALSE,
-                    status = 'warning',
-                    solidHeader = TRUE,
-                    collapsible = TRUE,
-                    width = NULL,
-                    dataTableOutput("countyTable")
-                  ),
                   boxPlus(
                     title = "County Housing Units",
                     closable = FALSE,
@@ -259,6 +253,17 @@ shinyApp(
                     collapsible = TRUE,
                     width = NULL,
                     plotOutput('ctyvalue', height = 600)
+                  ),
+                  boxPlus(
+                    title = "County Table - All Variables",
+                    closable = FALSE,
+                    status = 'warning',
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    #DT::dataTableOutput("countyTable")
+                    #tableOutput('countyTable')
+                    gt_output(outputId = "countyTable")
                   ),
                   br()
                 )),
@@ -474,7 +479,7 @@ shinyApp(
         theme_minimal() +
         labs(title = paste('Fitness-for-Use by Housing Type in', filtervar),
              subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
-             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
+             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2014-2018 ACS 5-year estimates.') +
         xlab('Average Fitness-for-Use Value') + 
         ylab('Variable') +
         theme(text=element_text(size=16,  family=font)) + 
@@ -495,7 +500,7 @@ shinyApp(
         theme_minimal() +
         labs(title = paste('Fitness-for-Use by Property Value in', filtervar),
              subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
-             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
+             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2014-2018 ACS 5-year estimates.') +
         xlab('Average Fitness-for-Use Value') + 
         ylab('Variable') +
         theme(text=element_text(size=16,  family=font)) +
@@ -516,13 +521,14 @@ shinyApp(
         theme_minimal() +
         labs(title = paste('Fitness-for-Use by Year Built in', filtervar),
              subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
-             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
+             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2014-2018 ACS 5-year estimates.') +
         xlab('Average Fitness-for-Use Value') + 
         ylab('Variable') +
         theme(text=element_text(size=16,  family=font))+
         theme(plot.title = element_text(face = "bold"))
     })
     
+    # render County % Rural Text
     output$ruralText <- renderUI({
       filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- va_table_long %>%
@@ -535,17 +541,31 @@ shinyApp(
                sep = ""))
     })
     
-    output$countyTable <- DT::renderDataTable({
+    output$countyTable <- render_gt({
       filtervar <- strsplit(input$vacty, "[,]")[[1]][1]
       cty <- va_table_long %>%
         filter(County == filtervar) %>%
-        dplyr::select(-County) %>%
         filter(variable != 'Percent Rural') %>%
-        mutate(good = ifelse(abs(value) <= 1, 1, 0)) %>%
-        datatable() %>% 
-        formatStyle(
-          columns = 5,
-          backgroundColor = styleEqual(c(0, 1), c('gray', 'yellow'))
+        mutate(value = round(value, 2)) %>%
+        dplyr::select(-County) %>%
+        rename('Variable' = 'variable') %>% gt() %>%
+        tab_style(
+          style = cell_fill(color = "#D1E0BF"),
+          locations = cells_body(
+            columns = vars(Variable, value),
+            rows = abs(value) <= 1)
+        ) %>%
+        cols_label(value = 'Fitness-for-Use Metric') %>%
+        tab_header(
+          title = paste(filtervar, 'Variables'),
+          subtitle = "Highlighted (green) rows indicate variables for which CoreLogic estimates fall within the 90% ACS margin of error. Data is not available for every county."
+        ) %>%
+        fmt_missing(
+          columns = 2,
+          missing_text = "Data not available"
+        ) %>%
+        tab_source_note(
+          source_note = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2014-2018 ACS 5-year estimates.'
         )
     })
     
