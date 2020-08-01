@@ -7,16 +7,22 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r libraries}
 library(readxl)
 library(dplyr)
 library(stringr)
+library(dataplumbr)
+library(data.table)
+library(leaflet)
+```
 
-loc.validate_address <- function(address_1 = "",
-                                 address_2 = "1100 Wilson Blvd",
-                                 city = "Arlington",
+```{r loc_function}
+loc.validate_address <- function(id = "",
+                                 address_1 = "",
+                                 address_2 = "5141 HOPEWELL RD",  #"1100 Wilson Blvd",
+                                 city =  "NEW KENT", #"Arlington",
                                  state = "VA",
-                                 zip5 = "",
+                                 zip5 = "23124", #"",
                                  zip4 = "",
                                  full_info = TRUE,
                                  usps_userid = "789UNIVE1553") {
@@ -35,67 +41,77 @@ loc.validate_address <- function(address_1 = "",
         stringr::str_replace_all("(\n|\\s+)", " ") %>%
         utils::URLencode()
     ls <- xml2::as_list(xml2::read_xml(url))
-    t(as.data.frame(lapply(ls$AddressValidateResponse, unlist)))
+    final <- t(as.data.frame(lapply(ls$AddressValidateResponse, unlist)))
+    final <- final %>% bind_cols(rowid = id)
+    final
 }
 
 
-# loc.validate_address(address_2 = "2 Maidens Bower Court", city = "Potomac", state = "MD", zip5 = "20854")
+loc.validate_address <- function(id = "",
+                                 address_1 = "",
+                                 address_2 = "5141 HOPEWELL RD",  #"1100 Wilson Blvd",
+                                 city =  "NEW KENT", #"Arlington",
+                                 state = "VA",
+                                 zip5 = "23124", #"",
+                                 zip4 = "",
+                                 full_info = TRUE,
+                                 usps_userid = "789UNIVE1553") {
+    # if (full_info == TRUE) rev <- 1 else rev <- 0
+    url <- paste0("https://secure.shippingapis.com/ShippingAPI.dll?API=Verify&XML=<AddressValidateRequest USERID=\"", usps_userid, "\">
+        <Revision>", 1,"</Revision>
+        <Address>
+            <Address1>", address_1,"</Address1>
+            <Address2>", address_2,"</Address2>
+            <City>", city,"</City>
+            <State>", state,"</State>
+            <Zip5>", zip5,"</Zip5>
+            <Zip4>", zip4,"</Zip4>
+        </Address>
+        </AddressValidateRequest>") %>%
+        stringr::str_replace_all("(\n|\\s+)", " ") %>%
+        utils::URLencode()
+    ls <- xml2::as_list(xml2::read_xml(url))
+    final <- t(as.data.frame(lapply(ls$AddressValidateResponse, unlist)))
+    final <- final %>% bind_cols(rowid = id)
+    final
+}
 
+# loc.validate_address(address_2 = "2 Maidens Bower Court", city = "Potomac", state = "MD", zip5 = "20854")
+```
+
+
+```{r county_data}
 ### COUNTY DATA
 original_newkent_county <-read_excel("~/git/dspg20broadbandERS/data/new-kent-data/NK ASSESSMENT REPORT 2020.xlsx") #13,650
 geocoded_newkent_county <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/geocoded_newkent_countydata_20JULY2020.RDS") #13,468
 
-subset_geocoded_nk <- geocoded_newkent_county %>%
-                      filter(!is.na(lat)) #,8988
-
-# orig_newkent_stand_add <- loc.validate_address(address_2 = original_newkent_county$`Property Location`, 
-#                                                city = original_newkent_county$City, 
-#                                                state = "VA", 
-#                                                zip5 = str_extract(original_newkent_county$Zip, "\\d{5}") )
-# 
-# orig_newkent_stand_add <- list()
-# 
-# for (i in 1:nrow(original_newkent_county)) {
-#   orig_newkent_stand_add[[i]] <- loc.validate_address(address_2 = original_newkent_county$`Property Location`[i], 
-#                                                city = original_newkent_county$City[i], 
-#                                                state = "VA", 
-#                                                zip5 = str_extract(original_newkent_county$Zip[i], "\\d{5}") ) %>%
-#     as.data.frame
-# }
-
-# df <- do.call("rbind", orig_newkent_stand_add) 
-# 
-# df <- reshape2::melt(orig_newkent_stand_add)
-# 
-# df_dim <- lapply(orig_newkent_stand_add, FUN = dim)
-# df_dim
-# unlist(head(df_dim, 100))
-# saveRDS(orig_newkent_stand_add, "~/orig_newkent_stand_add.RDS")
-# 
-# orig_newkent_stand_add[[1]] %>% class()
+# subset_geocoded_nk <- geocoded_newkent_county %>% filter(!is.na(lat)) #,8988
 
 ```
 
-```{r}
-library(dataplumbr)
-library(data.table)
+```{r stand_county_data}
 
 addresses <- data.table(
   # address1 = ,
+  PID = original_newkent_county$`PID #`,
   address2 = original_newkent_county$`Property Location`,
   city = original_newkent_county$City,
   state = "VA",
   zip = str_extract(original_newkent_county$Zip, "\\d{5}")
 )
+
 if (exists("addr_final")) rm(addr_final)
+
 for (i in 1:nrow(addresses)) {
+  print(i)
   parsed <- loc.validate_address(
+    id = addresses$PID[i], 
     address_1 = addresses$address1[i],
     address_2 = addresses$address2[i],
     city = addresses$city[i],
     zip5 = addresses$zip[i]
   ) %>%
-    as.data.table()
+    as.data.table() 
   if (exists("addr_final")) {
     addr_final <- rbindlist(list(addr_final, parsed), use.names = TRUE, fill = TRUE)
   } else {
@@ -103,14 +119,68 @@ for (i in 1:nrow(addresses)) {
   }
 }
 
-addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr.RDS")
+# addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr_01AUG2020.RDS")
+# addr_final <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr_01AUG2020.RDS")
+addr_final_cty <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr_01AUG2020.RDS")
+# rm(addr_final)
+```
+
+257 properties from New Kent County do not receive ANY standardization response (either error, NA, or actual stand address) from USPS:
+
+* incorrect cities/zips - perhaps these are second homes
+* intersections not addresses
+* no house number
+* King cross - either can't find it on google maps
+* Quay Ct - points to empty lot on google maps
+* King Bishop Ct - points to  the same empty lot on google maps
+* Battlefield CM -  (commons) - points to same empty lot on google maps
+* Prince Andrew - points to same empty lot on google maps for Quinton, for VA Beach, points to intersection 
+* ALLINGTON CASTLE RD  - total mystery 
+
+HOWEVER - 24 of these did geocode from census
+
+```{r}
+nrow(addresses)
+nrow(addr_final_cty)
+
+cty_didnt_standardize <- addresses %>% filter(PID %in% addr_final_cty$rowid == FALSE)
+geocoded_newkent_county %>% filter(`PID #` %in% cty_didnt_standardize$PID == TRUE) %>% filter(method != "none")
+
+```
+
+
+in geocoded New Kent data - for the 67 PIDs with multiple lat/longs
+
+```{r combine_county_data}
+addr_final_subset <- addr_final_cty %>% 
+  select(rowid, Address2, City, State, Zip5, Zip4, Error.Description, Vacant) %>% 
+  distinct()
+
+geocoded_newkent_county <- geocoded_newkent_county %>% 
+  group_by(`PID #`, addr, method) %>% 
+  summarise(lat = dplyr::first(lat), long = dplyr::first(long)) %>% 
+  as.data.frame()
+
+orig_county_stand_geo <- original_newkent_county %>% 
+  left_join(addr_final_subset, by = c("PID #" = "rowid")) %>%
+  left_join(geocoded_newkent_county, by = "PID #")
+
+orig_county_stand_geo %>% count(#no_error = !is.na(Error.Description), 
+                            stand_add = !is.na(Address2), 
+                            coords = !is.na(lat))
+
+# saveRDS(orig_county_stand_geo, "~/git/dspg20broadbandERS/data/geocoding-output/orig_nk_cty_stand_geo_01AUG2020.RDS")
+
+# addr <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr.RDS")
+
+orig_county_stand_geo <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/orig_nk_cty_stand_geo_01AUG2020.RDS")
 
 
 ```
 
 
 
-```{r}
+```{r corelogic_data}
 
 ###### CORELOGIC DATA
 # con <- get_db_conn()
@@ -127,15 +197,16 @@ addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_
 # saveRDS(nk_2018, "~/original_newkent_corlogic2018data.RDS")
 # DBI::dbDisconnect(con)
 
-nk_2018 <- readRDS("~/original_newkent_corlogic2018data.RDS")
+nk_2018 <- readRDS("~/original_newkent_corlogic2018data.RDS") %>% mutate(row_id = row_number())
 
-subset_cl_nk <- nk_2018 %>%
-                filter(!is.na(parcel_level_latitude)) #12,359
+# subset_cl_nk <- nk_2018 %>% filter(!is.na(parcel_level_latitude)) #12,359
+
 ```
 
 
 ```{r}
 addresses <- data.table(
+  ID = nk_2018$row_id,
   # address1 = ,
   address2 = paste(ifelse(!is.na(nk_2018$situs_house_number), nk_2018$situs_house_number, ""), 
                    ifelse(!is.na(nk_2018$situs_house_number), nk_2018$situs_street_name, ""), 
@@ -145,15 +216,19 @@ addresses <- data.table(
   state = "VA",
   zip = str_extract(nk_2018$situs_zip_code, "\\d{5}")
 )
+
 if (exists("addr_final")) rm(addr_final)
-for (i in 1:nrow(addresses)) {
+
+for (i in 10313:nrow(addresses)) {
+  print(i)
   parsed <- loc.validate_address(
+    id = addresses$ID[i], 
     address_1 = addresses$address1[i],
     address_2 = addresses$address2[i],
     city = addresses$city[i],
     zip5 = addresses$zip[i]
   ) %>%
-    as.data.table()
+    as.data.table() 
   if (exists("addr_final")) {
     addr_final <- rbindlist(list(addr_final, parsed), use.names = TRUE, fill = TRUE)
   } else {
@@ -161,9 +236,312 @@ for (i in 1:nrow(addresses)) {
   }
 }
 
-# addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_cl_stand_addr_1.RDS")
+# addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_CL_stand_addr_pt1_01AUG2020.RDS")
+# addr_final %>% saveRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_CL_stand_addr_pt2_01AUG2020.RDS")
+addr_final_cl <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_CL_stand_addr_pt2_01AUG2020.RDS")
+```
+
+```{r}
+addr_final_subset <- addr_final %>% 
+  select(rowid, Address2, City, State, Zip5, Zip4, Error.Description, Vacant) %>% 
+  distinct()
+
+orig_cl_stand_geo <- nk_2018 %>% 
+  left_join(addr_final_subset, by = c("row_id" = "rowid")) 
+  
+
+orig_cl_stand_geo %>% count(#no_error = !is.na(Error.Description), 
+                            stand_add = !is.na(Address2), 
+                            coords = !is.na(parcel_level_latitude))
+
+# saveRDS(orig_cl_stand_geo, "~/git/dspg20broadbandERS/data/geocoding-output/orig_nk_cl_stand_geo_01AUG2020.RDS")
+
+orig_cl_stand_geo <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/orig_nk_cl_stand_geo_01AUG2020.RDS")
 
 ```
+
+#### SUMMARISE
+
+```{r}
+data.frame("PHASE" = c("A", "A", "A", "B", "B", "B"),
+           "STEP" = c("Original", "Stand Output", "Combined", "Coords", "Address - String", "Address - Stand"), 
+           "COUNTY" = c(nrow(original_newkent_county), nrow(addr_final_cty), 
+                        nrow(orig_county_stand_geo), 
+                        sum(!is.na(orig_county_stand_geo$lat)),  
+                        sum(!is.na(orig_county_stand_geo$`Property Location`)), 
+                        sum(!is.na(orig_county_stand_geo$Address2))
+                        ), 
+           "CORELOGIC" = c(nrow(nk_2018), nrow(addr_final_cl), 
+                           nrow(orig_cl_stand_geo), 
+                           sum(!is.na(orig_cl_stand_geo$parcel_level_latitude)),
+                           sum(!is.na(orig_cl_stand_geo$situs_street_name)), 
+                           sum(!is.na(orig_cl_stand_geo$Address2))
+                           )
+           )
+
+```
+
+
+
+#### PREP FOR MATCHING
+
+```{r}
+orig_cl_stand_geo <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/orig_nk_cl_stand_geo_01AUG2020.RDS")
+orig_county_stand_geo <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/orig_nk_cty_stand_geo_01AUG2020.RDS")
+
+cty_prep_to_match <- orig_county_stand_geo %>% #head() %>% 
+  select(`PID #`, 
+         `Property Location`, City.x, State.x, 
+         Address2, City.y, State.y, Zip5, Zip4, 
+         lat, long, 
+         Error.Description, Vacant, method)
+
+cl_prep_to_match  <- orig_cl_stand_geo %>% # head() %>% 
+  select(row_id, 
+         situs_house_number, situs_street_name, situs_mode, situs_city, situs_state, situs_zip_code, 
+         Address2, City, State, Zip5, Zip4, 
+         parcel_level_latitude, parcel_level_longitude, 
+         Error.Description, Vacant) %>% 
+  mutate(method = "corelogic",
+         PropertyLocation1 = paste(situs_house_number, situs_street_name, situs_mode), 
+         PropertyLocation2 = paste(situs_house_number, situs_street_name))
+
+ctyrepeatonPL <- cty_prep_to_match %>% count(`Property Location`) %>% filter(n > 1)
+clrepeatonPL <- cl_prep_to_match %>% count(PropertyLocation1) %>% filter(n > 1)
+clrepeatonPL2 <- cl_prep_to_match %>% count(PropertyLocation2) %>% filter(n > 1)
+
+cty_prep_to_match <- cty_prep_to_match %>% 
+  mutate(repeats = ifelse(`Property Location` %in% ctyrepeatonPL$`Property Location`, 1, 0))
+table(cty_prep_to_match$repeats)
+
+cl_prep_to_match <- cl_prep_to_match %>% 
+  mutate(repeats1 = ifelse(PropertyLocation1 %in% clrepeatonPL$PropertyLocation1, 1, 0),
+         repeats2 = ifelse(PropertyLocation2 %in% clrepeatonPL2$PropertyLocation2, 1, 0))
+table(cl_prep_to_match$repeats1)
+table(cl_prep_to_match$repeats2)
+
+```
+
+#### MATCHING - PASS 1 - no repeats - street address - county_only (not standardized)
+
+```{r}
+cty_prep_to_match_PASS1 <- cty_prep_to_match %>% 
+  filter(repeats == 0) 
+
+cl_prep_to_match_PASS1 <- cl_prep_to_match %>% 
+  filter(repeats1 == 0 & repeats2 == 0) 
+
+nrow(cty_prep_to_match_PASS1) #10,054
+nrow(cl_prep_to_match_PASS1) #9,831
+
+pass1_matched <- cty_prep_to_match_PASS1 %>% inner_join(cl_prep_to_match_PASS1, by =  c("Property Location" = "PropertyLocation1")) 
+
+nrow(pass1_matched) #7,076
+pass1_matched %>% count(`PID #`) %>% filter(n>1)
+pass1_matched %>% count(row_id) %>% filter(n>1)
+
+
+cty_prep_to_match_PASS2 <- cty_prep_to_match_PASS1 %>% # should I anti-join here instead?
+  filter(`PID #` %in% pass1_matched$`PID #` == FALSE)
+
+cl_prep_to_match_PASS2 <- cl_prep_to_match_PASS1 %>%
+  filter(row_id %in% pass1_matched$row_id == FALSE)
+
+nrow(cty_prep_to_match_PASS2) #2,978
+nrow(cl_prep_to_match_PASS2) #2,305
+
+pass2_matched <- cty_prep_to_match_PASS2 %>% inner_join(cl_prep_to_match_PASS2, by =  c("Property Location" = "PropertyLocation2")) 
+
+nrow(pass2_matched) #17
+pass2_matched %>% count(`PID #`) %>% filter(n>1)
+pass2_matched %>% count(row_id) %>% filter(n>1)
+
+cty_prep_to_match_PASS3 <- cty_prep_to_match_PASS2 %>% # should I anti-join here instead?
+  filter(`PID #` %in% pass2_matched$`PID #` == FALSE)
+
+cl_prep_to_match_PASS3 <- cl_prep_to_match_PASS2 %>%
+  filter(row_id %in% pass2_matched$row_id == FALSE)
+
+pass1_2_matched <- rbind(pass1_matched %>% select(-PropertyLocation2), pass2_matched %>% select(-PropertyLocation1))
+nrow(pass1_2_matched) #7,093
+```
+
+
+#### MATCHING - PASS 3 - no repeats AND no blank Address2 - street address - standardized
+
+```{r}
+cty_returntomatchthese <- cty_prep_to_match_PASS3 %>% filter(is.na(Address2)) 
+cty_returntomatchthese %>% select(`Property Location`, Address2, lat, long) %>% head()
+cl_returntomatchthese <- cl_prep_to_match_PASS3 %>% filter(is.na(Address2)) 
+cl_returntomatchthese %>% select(PropertyLocation1, Address2, parcel_level_latitude, parcel_level_longitude) %>% head()
+
+
+cty_prep_to_match_PASS3 <- cty_prep_to_match_PASS3 %>% filter(!is.na(Address2)) 
+cl_prep_to_match_PASS3 <- cl_prep_to_match_PASS3 %>% filter(!is.na(Address2)) 
+
+
+nrow(cty_prep_to_match_PASS3) #1,240
+nrow(cl_prep_to_match_PASS3) #2,101
+
+pass3_matched <- cty_prep_to_match_PASS3 %>% inner_join(cl_prep_to_match_PASS3, by =  c("Address2", "City.y" = "City", "State.y" = "State", "Zip5", "Zip4")) 
+
+nrow(pass3_matched) #956
+pass3_matched %>% count(`PID #`) %>% filter(n>1) # PID == 10439 w 2 rows --> join created extra row
+pass3_matched %>% count(row_id) %>% filter(n>1)
+
+cty_prep_to_match_PASS4 <- cty_prep_to_match_PASS3 %>% # should I anti-join here instead?
+  filter(`PID #` %in% pass3_matched$`PID #` == FALSE)
+
+cl_prep_to_match_PASS4 <- cl_prep_to_match_PASS3 %>%
+  filter(row_id %in% pass3_matched$row_id == FALSE)
+
+
+##### Investigating the second row
+
+pass3_matched %>% filter(`PID #` == 10439)
+cl_prep_to_match_PASS3 %>% filter(row_id == "9626")
+
+pass3_matched %>% select(`Property Location`, PropertyLocation1, Address2) %>% 
+  mutate(dist = stringdist::stringdist(PropertyLocation1, Address2)) %>%
+  filter(dist >  0) %>% 
+  arrange(desc(dist))
+
+original_newkent_county %>% filter(`PID #` == 10439)
+nk_2018 %>% filter(row_id == "9626")
+
+colnames(pass1_2_matched)
+print("  ")
+colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2))
+setdiff(colnames(pass1_2_matched), colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4)))
+setdiff(colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4)), colnames(pass1_2_matched))
+
+### Combining everything for sf purposes - can ignore? 
+
+pass1_2_3_matched <- rbind(pass1_2_matched %>% select(-Address2.x, -Zip5.x, -Zip4.x, -Address2.y, -City, -State, -Zip5.y, -Zip4.y), pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4))
+```
+
+
+```{r}
+nrow(cty_prep_to_match_PASS4) #285
+nrow(cl_prep_to_match_PASS4) #1145
+
+cty_prep_to_match_PASS4  %>% count(Zip5)
+cl_prep_to_match_PASS4 %>% count(Zip5)
+
+cty_prep_to_match_PASS4  %>% filter(Zip5 == "23181") %>% .$Address2 %>% unique
+cl_prep_to_match_PASS4 %>% filter(Zip5 == "23181") %>% .$Address2 %>% unique
+
+```
+```{r}
+data.frame( #"PHASE" = c("A", "A", "A", "B", "B", "B"),
+           "STEP" = c("Preparation", "SET ASIDE - Address Repeats", "Non Repeats", 
+                      "Pass 1 - Full Add", # "Pass 1 - Missed",
+                      "Pass 2 - w/o Mode", #"Pass 2 - Missed",
+                      "Pass 3 - Stand Add w/o blanks", "MISSED - from Pass 3",
+                      "SET ASIDE - Stand Add Missing"
+                      ), 
+           "COUNTY" = c(nrow(cty_prep_to_match), sum(cty_prep_to_match$repeats),
+                        nrow(cty_prep_to_match) - sum(cty_prep_to_match$repeats),
+                        nrow(pass1_matched),# nrow(cty_prep_to_match_PASS2),
+                        nrow(pass2_matched), # nrow(cty_prep_to_match_PASS3),
+                        nrow(pass3_matched),  nrow(cty_prep_to_match_PASS4),
+                        nrow(cty_returntomatchthese)
+                        ), 
+           "CORELOGIC" = c(nrow(cl_prep_to_match), cl_prep_to_match %>% filter(repeats1 ==1|repeats2 == 1) %>% nrow(),
+                           nrow(cl_prep_to_match) - cl_prep_to_match %>% filter(repeats1 ==1|repeats2 == 1) %>% nrow(),
+                           nrow(pass1_matched), # nrow(cl_prep_to_match_PASS2),
+                           nrow(pass2_matched),# nrow(cl_prep_to_match_PASS3),
+                           nrow(pass3_matched), nrow(cl_prep_to_match_PASS4),
+                           nrow(cl_returntomatchthese)
+                           )
+           )
+```
+
+TO add this up correctly
+Eligible Non Repeats = 
+PAss 1 + 2  + 3  + Pass 3 Missed + Leftovers
+
+```{r}
+10121 # eligble, non repeats
+7090 + 17 + 964 + 329 + 1722 
+#(one off because that one row matched twice because address standardized to duplicate address)
+
+9381
+7090 + 17 + 964 + 1123+ 187
+```
+
+
+
+## geocode CORELOGIC NEW KENT!!!
+
+```{r}
+library(leaflet)
+
+table(is.na(pass1_2_matched$parcel_level_latitude))
+
+pass1_2_matched_sf <- sf::st_as_sf(pass1_2_matched %>% filter(!is.na(parcel_level_latitude)), coords = c("parcel_level_longitude", "parcel_level_latitude"))
+
+pass1_2_3_matched_sf <- sf::st_as_sf(pass1_2_3_matched %>% filter(!is.na(parcel_level_latitude)), coords = c("parcel_level_longitude", "parcel_level_latitude"))
+
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  addCircleMarkers(radius = 0.5) 
+
+# What matched in rounds 1,2,3
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  addCircleMarkers(radius = 0.5) %>%
+  addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), lng = as.numeric(pass3_matched$parcel_level_longitude), radius = 0.5, color = "#32CD32")
+
+# What hasn't matched in rounds 1,2,3
+
+unmatched_cty_pass4 <- cty_prep_to_match_PASS4 %>% filter(!is.na(lat))
+unmatched_cl_pass4 <- cl_prep_to_match_PASS4 %>% filter(!is.na(parcel_level_latitude))
+
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  addCircleMarkers(radius = 0.5, color = "#32CD32") %>%
+  addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), 
+                   lng = as.numeric(pass3_matched$parcel_level_longitude), 
+                   radius = 0.5, color = "#32CD32") %>%
+  addCircleMarkers(lat = unmatched_cty_pass4$lat, lng = unmatched_cty_pass4$long, 
+                   radius  = 0.5, color = "#ff0000") %>%
+  addCircleMarkers(lat = cty_returntomatchthese$lat, lng = cty_returntomatchthese$long, 
+                   radius  = 0.5, color = "#ff0000") %>% 
+  addCircleMarkers(lat = as.numeric(unmatched_cl_pass4$parcel_level_latitude), lng = as.numeric(unmatched_cl_pass4$parcel_level_longitude), 
+                   radius = 0.5, color = "#0000FF") %>%
+  addCircleMarkers(lat = as.numeric(cty_returntomatchthese$parcel_level_latitude), lng = as.numeric(cty_returntomatchthese$parcel_level_longitude), 
+                   radius = 0.5, color = "#0000FF")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OLD
 
 ```{r}
 cl_stand <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_cl_stand_addr_1.RDS")
@@ -174,24 +552,138 @@ cty_stand_nona <- cty_stand %>% filter(!is.na(Address2))
 
 cty_matched_stand <- cty_stand_nona %>% inner_join(cl_stand_nona, by = c("Address2", "City", "State", "Zip5", "Zip4")) %>% mutate(addr = paste0(Address2, ", ", City, ", ", State, ", ", Zip5))
 
-cty_matched_geo <- tidygeocoder::geo_cascade()
+# cty_matched_geo <- tidygeocoder::geo_cascade(head(cty_matched_stand$addr))
 
 data_list <- list()
+# cty_matched_stand[,"addr"]
+# colnames(cty_matched_stand)
 
-for (i in 1:nrow(cty_matched_stand)) {
+for (i in 1:3650) { #nrow(cty_matched_stand)
+  print(i)
   #to see whether geocode in census works
-  lat_long <- tidygeocoder::geocode(cty_matched_stand[i, c("addr")], addr, method = "census") %>%
-    mutate(method = "census")
+  # lat_long <- tidygeocoder::geo_cascade(cty_matched_stand$addr[i])
   # if lat, long is NA
-  if (is.na(lat_long$lat)) {
-    lat_long <- tidygeocoder::geocode(cty_matched_stand[i, c("addr")], addr, method = "osm") %>%
-    mutate(method = ifelse(is.na(lat), "none", "osm"))
-  }
+  # if (is.na(lat_long$lat)) {
+    # lat_long <- tidygeocoder::geocode(cty_matched_stand[i, c("addr")], addr, method = "osm") %>%
+    # mutate(method = ifelse(is.na(lat), "none", "osm"))
+  # }
+      tryCatch({
+        lat_long <- tidygeocoder::geo_cascade(cty_matched_stand$addr[i])
+      }, 
+        error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  
 data_list[[i]] <- lat_long
 
 }
-nk_geo_data <- do.call(rbind, data_list)
-cty_matched_stand
+cty_matched_geo <- do.call(rbind, data_list)
+# cty_matched_geo %>% saveRDS("~/cl_cty_matched_geocoded.RDS")
+
+cty_matched_geo %>% head()
+table(cty_matched_geo$geo_method)
+
+```
+
+```{r}
+cty_matched_geo <- readRDS("~/cl_cty_matched_geocoded.RDS") 
+
+original_newkent_county
+nk_2018
+cty_matched_geo
+
+data.frame("Results" = c("Matched", "CL TOTAL", "CTY TOTAL", "CL MISSED", "CTY MISSED"), 
+           "Values" = c(nrow(cty_matched_geo), nrow(nk_2018), nrow(original_newkent_county), nrow(nk_2018) - nrow(cty_matched_geo), nrow(original_newkent_county) - nrow(cty_matched_geo)))
+
+matched <- nrow(cty_matched_geo)
+cl_total <- nrow(nk_2018)
+cty_total <- nrow(original_newkent_county)
+cl_stand <- nrow(cl_stand)
+cty_stand <- nrow(cty_stand)
+cl_stan_nona <- nrow(cl_stand_nona)
+cty_stan_nona <- nrow(cty_stand_nona)
+
+data.frame("Results" = c("1. TOTAL", "2. POST_STAND", "3. MINUS NA", "4. MATCHED", "% MATCH/TOTAL", "% MATCH/STAND"), 
+           "CoreLogic" = c( cl_total,  cl_stand, cl_stan_nona, matched, scales::percent(matched/cl_total), scales::percent(matched/cl_stan_nona)),
+           "County" = c(cty_total, cty_stand, cty_stan_nona, matched, scales::percent(matched/cty_total), scales::percent(matched/cty_stan_nona))
+           )
+```
+
+
+```{r}
+
+library(leaflet)
+
+# va_counties <- tigris::counties(state = "VA")
+# url <- "https://www2.census.gov/geo/tiger/TIGER2018/COUNTY/tl_2018_us_county.zip"
+# download.file(url, destfile = "~/tl_2018_us_county.zip")
+# test <- sf::st_read(unzip("~/tl_2018_us_county.zip")[4])
+# newkent <- test %>% filter(STATEFP == "51") %>% filter(str_detect(NAMELSAD, "Kent"))
+# saveRDS(newkent, "~/git/dspg20broadbandERS/data/new-kent-data/newkent_county_outline.RDS")
+newkent <- readRDS( "~/git/dspg20broadbandERS/data/new-kent-data/newkent_county_outline.RDS")
+RUCA <- readr::read_csv("~/git/dspg20broadbandERS/data/census-geographies/RUCA.csv")
+
+newkentruca <- RUCA %>% filter(State == "VA" & County == "New Kent County")
+
+# newkenttracts <- tigris::tracts(state = "VA", county = "127")
+# saveRDS(newkenttracts, "~/git/dspg20broadbandERS/data/census-geographies/newkent_tracts.RDS")
+newkenttracts <- readRDS("~/git/dspg20broadbandERS/data/census-geographies/newkent_tracts.RDS") 
+newkenttracts <- newkenttracts %>% left_join(newkentruca, by = "GEOID")
+
+leaflet(newkenttracts) %>%
+  addTiles() %>% 
+  addCircleMarkers(lng = cty_matched_geo$long, lat = cty_matched_geo$lat, radius = 0.5) %>%
+  addPolygons(color = "#GGGGGG")
+
+library(sf)
+subset_geocoded_nk_sf <-  sf::st_as_sf(subset_geocoded_nk, coords = c("lat", "long"))
+# subset_geocoded_nk <- subset_geocoded_nk %>% filter(str_detect(addr, ", VA, ") == TRUE)
+# subset_geocoded_nk #8942
+subset_geocoded_nk_sf <- cbind(subset_geocoded_nk_sf, subset_geocoded_nk$lat, subset_geocoded_nk$long)
+
+st_crs(subset_geocoded_nk_sf) <- st_crs(newkent)
+# subset_geocoded_nk_sf <- subset_geocoded_nk_sf %>% st_transform(st_crs(newkent))
+# subset_geocoded_nk_sf_nkONLY <-  subset_geocoded_nk_sf %>% filter(sf::st_within(x = ., y = newkent) == TRUE)
+# subset_geocoded_nk_sf <- subset_geocoded_nk_sf %>% head(10) %>% mutate(within = st_intersects(newkent))
+# subset_geocoded_nk_sf
+# apply(X = subset_geocoded_nk_sf %>% head(100), MARGIN = 1, FUN = st_intersects(y = newkent))
+test <- st_intersects(x = subset_geocoded_nk_sf, y = newkent, sparse = FALSE)
+test <- st_intersects(x = newkent, y = subset_geocoded_nk_sf, sparse = FALSE)
+table(lengths(test))
+test2 <- apply(test, 1, any)
+length(test2)
+table(test2)
+
+table(str_extract(subset_geocoded_nk$lat, "\\d\\d"))
+
+subset_geocoded_nk <- subset_geocoded_nk %>% filter(str_extract(lat, "\\d\\d") %in% c(36:38)& str_extract(long, "\\d\\d") %in% c(75:78))
+
+print("New Kent Census Tracts")
+
+leaflet(newkenttracts) %>%
+  addTiles() %>% 
+  # addCircleMarkers(lng = cty_matched_geo$long, lat = cty_matched_geo$lat, radius = 0.5) %>%
+  addPolygons()
+
+print("New Kent - Houses in both CL & CTY data")
+
+leaflet(newkenttracts) %>%
+  addTiles() %>% 
+  addCircleMarkers(lng = cty_matched_geo$long, lat = cty_matched_geo$lat, radius = 0.5) %>%
+  addPolygons(color = "#GGGGGG")
+
+print("New Kent - Houses in CTY data (that were geocoded without standardization)")
+
+leaflet(newkent) %>%
+  addTiles() %>% 
+  addCircleMarkers(lat = subset_geocoded_nk$lat, lng = subset_geocoded_nk$long, radius = 0.5) %>%
+  addPolygons(color = "#GGGGGG")
+
+print("New Kent - Houses in CL data (using CL geocoding)")
+
+leaflet(newkent) %>%
+  addTiles() %>% 
+  addCircleMarkers(lat = as.numeric(nk_2018$parcel_level_latitude), lng = as.numeric(nk_2018$parcel_level_longitude), radius = 0.5) %>%
+  addPolygons(color = "#GGGGGG")
+
 ```
 
 
