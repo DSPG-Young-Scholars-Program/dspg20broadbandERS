@@ -9,12 +9,56 @@ library(DT)
 
 source("theme.R")
 
+font = 'Arial'
+
 va_table_long <- read_csv('data/va_table_long.csv')
 vacounties <- unique(va_table_long$County)
 
-ffu_va_value <- va_table_long %>% filter(str_detect(variable, "value"))
-ffu_va_yrbuilt <- va_table_long %>% filter(str_detect(variable, "yrbuilt"))
-ffu_va_housing <- va_table_long %>% filter(str_detect(variable, "housing|occ"))
+va_table_long <- va_table_long %>% 
+  mutate(variable = recode_factor(variable, 
+                                  'percent_rural' = 'Percent Rural',
+                                  'mean_ffu_housing_units_total' = 'Total Housing Units',
+                                  'mean_occ_status_occupied' = 'Total Occupied Units',
+                                  'mean_occ_status_vacant' = 'Total Vacant Units',
+                                  'mean_value_less10' = 'Value Below $10,000',
+                                  'mean_value_10.15' = 'Value $10,000-$15,000',
+                                  'mean_value_15.20' = 'Value $15,000-$20,000',
+                                  'mean_value_20.25' = 'Value $20,000-$25,000',
+                                  'mean_value_25.30' = 'Value $25,000-$30,000',
+                                  'mean_value_35.40' = 'Value $30,000-$35,000',
+                                  'mean_value_40.50' = 'Value $40,000-$50,000',
+                                  'mean_value_50.60' = 'Value $50,000-$60,000',
+                                  'mean_value_60.70' = 'Value $60,000-$70,000',
+                                  'mean_value_70.80' = 'Value $70,000-$80,000',
+                                  'mean_value_80.90' = 'Value $80,000-$90,000',
+                                  'mean_value_90.100' = 'Value $90,000-$100,000',
+                                  'mean_value_100.125' = 'Value $100,000-$125,000',
+                                  'mean_value_125.150' = 'Value $125,000-$150,000',
+                                  'mean_value_150.175' = 'Value $150,000-175,000',
+                                  'mean_value_175.200' = 'Value $175,000-$200,000',
+                                  'mean_value_200.250' = 'Value $200,000-$250,000',
+                                  'mean_value_250.300' = 'Value $250,000-$300,000',
+                                  'mean_value_300.400' = 'Value $300,000-$400,000',
+                                  'mean_value_400.500' = 'Value $400,000-$500,000',
+                                  'mean_value_500.750' = 'Value $500,000-$750,000',
+                                  'mean_value_750.1000' = 'Value $750,000-$1,000,000',
+                                  'mean_value_1000.1500' = 'Value $1,000,000-$1,500,000',
+                                  'mean_value_1500.2000' = 'Value $1,500,000-$2,000,000',
+                                  'mean_value_2000plus' = 'Value Over $2,000,000',
+                                  'mean_yrbuilt_1939less' = 'Built Before 1939',
+                                  'mean_yrbuilt_1940.1949' = 'Built 1940-1949',
+                                  'mean_yrbuilt_1950.1959' = 'Built 1950-1959',
+                                  'mean_yrbuilt_1960.1969' = 'Built 1960-1969',
+                                  'mean_yrbuilt_1970.1979' = 'Built 1970-1979',
+                                  'mean_yrbuilt_1980.1989' = 'Built 1980-1989',
+                                  'mean_yrbuilt_1990.1999' = 'Built 1990-1999',
+                                  'mean_yrbuilt_2000.2009' = 'Built 2000-2009',
+                                  'mean_yrbuilt_2010.2013' = 'Built 2010-2013',
+                                  'mean_yrbuilt_2014plus' = 'Built After 2014'))
+
+ffu_va_value <- va_table_long %>% filter(str_detect(variable, "Value"))
+ffu_va_yrbuilt <- va_table_long %>% filter(str_detect(variable, "Built"))
+ffu_va_housing <- va_table_long %>% filter(str_detect(variable, "Units"))
 
 ruca_def <- read_csv('data/ruca_def.csv')
 
@@ -153,22 +197,53 @@ shinyApp(
         tabItem(tabName = "vatable",
                 fluidRow(
                   boxPlus(
-                    title = "Virginia Table",
+                    title = "Virginia Counties",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
-                    collapsible = TRUE,
+                    collapsible = FALSE,
                     width = NULL,
                     selectInput(
                       inputId = 'vacty',
                       label = 'Select a Virginia County',
                       choices = vacounties),
                     uiOutput("ruralText"),
-                    p("If the plots and table are empty, CoreLogic did not have data for this county."),
-                    dataTableOutput("countyTable"),
-                    plotOutput('ctyvalue'),
-                    plotOutput('ctyyrbuilt'),
+                    p("The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the table and plots below are blank, we were unable to calculate the fitness-for-use as a result of this missing data.")),
+                  boxPlus(
+                    title = "County Table",
+                    closable = FALSE,
+                    status = 'warning',
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    dataTableOutput("countyTable")
+                  ),
+                  boxPlus(
+                    title = "County Housing Units",
+                    closable = FALSE,
+                    status = 'warning',
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
                     plotOutput('ctyhousing')
+                  ),
+                  boxPlus(
+                    title = "County Year Built",
+                    closable = FALSE,
+                    status = 'warning',
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    plotOutput('ctyyrbuilt')                    
+                  ),
+                  boxPlus(
+                    title = "County Property Values",
+                    closable = FALSE,
+                    status = 'warning',
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    plotOutput('ctyvalue', height = 600)
                   ),
                   br()
                 )),
@@ -324,42 +399,66 @@ shinyApp(
     output$ctyhousing <- renderPlot({
       cty <- ffu_va_housing %>%
         filter(County == input$vacty) %>%
-        filter(variable != 'percent_rural')
+        filter(variable != 'Percent Rural')
       cty %>%
         ggplot(aes(value, variable)) + 
-        geom_point() + 
-        geom_vline(xintercept = -1, linetype = "dashed", color = "red") + 
-        geom_vline(xintercept = 1, linetype = "dashed", color = "red")
+        geom_point(color = '#2C4F6B', size = 3) + 
+        geom_vline(xintercept = -1, linetype = "dashed", color = "#E57200") + 
+        geom_vline(xintercept = 1, linetype = "dashed", color = "#E57200") +
+        theme_minimal() +
+        labs(title = paste('Fitness-for-Use by Housing Type in', 'Albemarle County'),
+             subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
+             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
+        xlab('Average Fitness-for-Use Value') + 
+        ylab('Variable') +
+        theme(text=element_text(size=16,  family=font)) + 
+        theme(plot.title = element_text(face = "bold"))
     })
     
     # Render Value Plot
     output$ctyvalue <- renderPlot({
       cty <- ffu_va_value %>%
         filter(County == input$vacty) %>%
-        filter(variable != 'percent_rural')
+        filter(variable != 'Percent Rural')
       cty %>%
         ggplot(aes(value, variable)) + 
-            geom_point() + 
-            geom_vline(xintercept = -1, linetype = "dashed", color = "red") + 
-            geom_vline(xintercept = 1, linetype = "dashed", color = "red")
+        geom_point(color = '#2C4F6B', size = 3) + 
+        geom_vline(xintercept = -1, linetype = "dashed", color = "#E57200") + 
+        geom_vline(xintercept = 1, linetype = "dashed", color = "#E57200") +
+        theme_minimal() +
+        labs(title = paste('Fitness-for-Use by Property Value in', 'Albemarle County'),
+             subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
+             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
+        xlab('Average Fitness-for-Use Value') + 
+        ylab('Variable') +
+        theme(text=element_text(size=16,  family=font)) +
+        theme(plot.title = element_text(face = "bold"))
     })
     
     # Render Year Built Plot
     output$ctyyrbuilt <- renderPlot({
       cty <- ffu_va_yrbuilt %>%
         filter(County == input$vacty) %>%
-        filter(variable != 'percent_rural')
+        filter(variable != 'Percent Rural')
       cty %>%
         ggplot(aes(value, variable)) + 
-        geom_point() + 
-        geom_vline(xintercept = -1, linetype = "dashed", color = "red") + 
-        geom_vline(xintercept = 1, linetype = "dashed", color = "red")
+        geom_point(color = '#2C4F6B', size = 3) + 
+        geom_vline(xintercept = -1, linetype = "dashed", color = "#E57200") + 
+        geom_vline(xintercept = 1, linetype = "dashed", color = "#E57200") +
+        theme_minimal() +
+        labs(title = paste('Fitness-for-Use by Year Built in', 'Albemarle County'),
+             subtitle = 'When the fitness-for-use metric falls outside the ±1 range (indicated by the dashed orange line), \nthe CoreLogic estimates were not within the 90% ACS margin of error.',
+             caption = 'Source: Fitness-for-use metric calculated from 2018 CoreLogic data \n(aggregated by census tract) and 2018 ACS 5-year estimates.') +
+        xlab('Average Fitness-for-Use Value') + 
+        ylab('Variable') +
+        theme(text=element_text(size=16,  family=font))+
+        theme(plot.title = element_text(face = "bold"))
     })
     
     output$ruralText <- renderUI({
       cty <- va_table_long %>%
         filter(County == input$vacty) %>%
-        filter(variable == 'percent_rural')
+        filter(variable == 'Percent Rural')
       pctrural <- round(cty$value*100,1)
 
       h4(paste(input$vacty, 
@@ -371,7 +470,7 @@ shinyApp(
       cty <- va_table_long %>%
         filter(County == input$vacty) %>%
         dplyr::select(-County) %>%
-        filter(variable != 'percent_rural') %>%
+        filter(variable != 'Percent Rural') %>%
         mutate(good = ifelse(abs(value) <= 1, 1, 0)) %>%
         datatable() %>% 
         formatStyle(
