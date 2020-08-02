@@ -204,9 +204,17 @@ shinyApp(
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    width = NULL
+                    width = NULL,
+                    p("The map on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for INSERT VARIABLES PRESENTED (see Data Sources and Methodology for explanation of how this is calculated). If the fitness-for-use value:"),
+                    tags$ul(
+                      tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
+                      tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
+                      tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
+                    ),
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data.')
+                    
                   ),
-                  h4('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation.'),
+#                  h4('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation.'),
                   br()
                 )),
 
@@ -220,7 +228,13 @@ shinyApp(
                     solidHeader = TRUE,
                     collapsible = FALSE,
                     width = NULL,
-                    h4('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots will be blank.'),
+                    p("The charts on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for three variables (housing type, year built, and value) for a specific county in Virginia (see Data Sources and Methodology for explanation of how this is calculated). If the fitness-for-use value:"),
+                    tags$ul(
+                      tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
+                      tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
+                      tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
+                    ),
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots are blank.'),
                     selectInput(
                       inputId = 'vacty',
                       label = 'Select a Virginia County',
@@ -326,12 +340,6 @@ shinyApp(
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     
-                    h3("Geocoding"),
-                    p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access the Census geocoder and geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
-                    p("However, a direct join of the data on the latitude and longitude was not possible because of the differences in the geocoding of the data. CoreLogic's method for geocoding places the location in the center of the property, while the Census geocoder places the location where the property mailbox is located. For larger parcels, these locations can be quite different."),
-                    p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance() function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
-                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, this would require a combination of manual encoding and encoding with the API to join more of the data. Instead, we present our data profiling results for the county data as another comparison to CoreLogic."),
-                    
                     h3("ACS Linkage"),
                     p("ACS provides estimates of counts for a selected geography (in our case, counts in a given census tract), while CoreLogic provides property-level data. Some assumptions were therefore necessary in order to match counts of CoreLogic property characteristics to ACS estimates."),
                     p('To get the overall count of housing units and the occupancy status for each tract, we considered properties in CoreLogic that were coded as single family dwellings, condos, duplexes, apartments, or commercial condos to be "residential" properties. These residential properties were summed by census tract to get the "occupied" count, and properties coded in CoreLogic as "vacant" were summed to get the "vacant" count. "Total housing units" were considered to be the sum of the occupied and vacant counts.'),
@@ -342,7 +350,13 @@ shinyApp(
                     p('One challenge of evaluating the coverage of CoreLogic data is that there is no "gold standard" comparison. While ACS data is rigorously collected and evaluated, it is still survey data and may be unreliable, particularly in the rural areas we are most interested in. CoreLogic data may be more accurate than ACS data for variables that are more consistently reported in tax assessments than by individuals on a survey. Therefore, we need to make comparisons in a way that accounts for these differences in the datasets while also providing information about how these differences are exhibited.'),
                     p('We use the following "fitness-for-use" metric to make these comparisons (Keller, Shipp, Orr, et al. 2016).'),
                     (img(src = "ffu_equation.png", width = 370, height = 50)),
-                    p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicatse that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.')
+                    p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicates that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.'),
+                    
+                    h3("Geocoding"),
+                    p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access the Census geocoder and geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
+                    p("However, a direct join of the data on the latitude and longitude was not possible because of the differences in the geocoding of the data. CoreLogic's method for geocoding places the location in the center of the property, while the Census geocoder places the location where the property mailbox is located. For larger parcels, these locations can be quite different."),
+                    p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance() function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
+                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, this would require a combination of manual encoding and encoding with the API to join more of the data. Instead, we present our data profiling results for the county data as another comparison to CoreLogic.")
                   ),
                   boxPlus(
                     title = "References",
@@ -379,7 +393,6 @@ shinyApp(
                                     tags$li("Number of Bathrooms"),
                                     tags$li("Year Built"),
                                     tags$li("Assessed Value")),
-                                    p("Our USDA sponsor highlighted these variables are important factors influencing property prices."),
                                     p("To profile these data, we considered the completeness of these variables and the distribution of property types.")
                                            ),
                        boxPlus(title = "Fairfax Profiling",
@@ -536,8 +549,8 @@ shinyApp(
         filter(variable == 'Percent Rural')
       pctrural <- round(cty$value*100,1)
 
-      h3(paste(filtervar, 
-               " is ", pctrural, " percent rural based on the census tracts it contains.", 
+      p(paste(filtervar, 
+               " is ", pctrural, " percent rural based on the RUCA codes of the census tracts it contains. See Data Sources and Methodology for a further explanation of RUCA codes.", 
                sep = ""))
     })
     
@@ -558,7 +571,7 @@ shinyApp(
         cols_label(value = 'Fitness-for-Use Metric') %>%
         tab_header(
           title = paste(filtervar, 'Variables'),
-          subtitle = "Highlighted (green) rows indicate variables for which CoreLogic estimates fall within the 90% ACS margin of error. Data is not available for every county."
+          subtitle = "Highlighted (green) rows indicate variables for which CoreLogic estimates fall within the 90% ACS margin of error. Data are not available for every county."
         ) %>%
         fmt_missing(
           columns = 2,
