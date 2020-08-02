@@ -288,8 +288,8 @@ table(cty_prep_to_match$repeats)
 cl_prep_to_match <- cl_prep_to_match %>% 
   mutate(repeats1 = ifelse(PropertyLocation1 %in% clrepeatonPL$PropertyLocation1, 1, 0),
          repeats2 = ifelse(PropertyLocation2 %in% clrepeatonPL2$PropertyLocation2, 1, 0))
-table(cl_prep_to_match$repeats1)
-table(cl_prep_to_match$repeats2)
+# table(cl_prep_to_match$repeats1)
+# table(cl_prep_to_match$repeats2)
 
 ```
 
@@ -302,14 +302,14 @@ cty_prep_to_match_PASS1 <- cty_prep_to_match %>%
 cl_prep_to_match_PASS1 <- cl_prep_to_match %>% 
   filter(repeats1 == 0 & repeats2 == 0) 
 
-nrow(cty_prep_to_match_PASS1) #10,054
-nrow(cl_prep_to_match_PASS1) #9,831
+# nrow(cty_prep_to_match_PASS1) #10,054
+# nrow(cl_prep_to_match_PASS1) #9,831
 
 pass1_matched <- cty_prep_to_match_PASS1 %>% inner_join(cl_prep_to_match_PASS1, by =  c("Property Location" = "PropertyLocation1")) 
 
-nrow(pass1_matched) #7,076
-pass1_matched %>% count(`PID #`) %>% filter(n>1)
-pass1_matched %>% count(row_id) %>% filter(n>1)
+# nrow(pass1_matched) #7,076
+# pass1_matched %>% count(`PID #`) %>% filter(n>1)
+# pass1_matched %>% count(row_id) %>% filter(n>1)
 
 
 cty_prep_to_match_PASS2 <- cty_prep_to_match_PASS1 %>% # should I anti-join here instead?
@@ -317,15 +317,19 @@ cty_prep_to_match_PASS2 <- cty_prep_to_match_PASS1 %>% # should I anti-join here
 
 cl_prep_to_match_PASS2 <- cl_prep_to_match_PASS1 %>%
   filter(row_id %in% pass1_matched$row_id == FALSE)
+```
 
-nrow(cty_prep_to_match_PASS2) #2,978
-nrow(cl_prep_to_match_PASS2) #2,305
+#### MATCHING - PASS 2 - no repeats - street address - county_only but without MODE (not standardized)
+
+```{r}
+# nrow(cty_prep_to_match_PASS2) #2,978
+# nrow(cl_prep_to_match_PASS2) #2,305
 
 pass2_matched <- cty_prep_to_match_PASS2 %>% inner_join(cl_prep_to_match_PASS2, by =  c("Property Location" = "PropertyLocation2")) 
 
-nrow(pass2_matched) #17
-pass2_matched %>% count(`PID #`) %>% filter(n>1)
-pass2_matched %>% count(row_id) %>% filter(n>1)
+# nrow(pass2_matched) #17
+# pass2_matched %>% count(`PID #`) %>% filter(n>1)
+# pass2_matched %>% count(row_id) %>% filter(n>1)
 
 cty_prep_to_match_PASS3 <- cty_prep_to_match_PASS2 %>% # should I anti-join here instead?
   filter(`PID #` %in% pass2_matched$`PID #` == FALSE)
@@ -334,7 +338,7 @@ cl_prep_to_match_PASS3 <- cl_prep_to_match_PASS2 %>%
   filter(row_id %in% pass2_matched$row_id == FALSE)
 
 pass1_2_matched <- rbind(pass1_matched %>% select(-PropertyLocation2), pass2_matched %>% select(-PropertyLocation1))
-nrow(pass1_2_matched) #7,093
+# nrow(pass1_2_matched) #7,093
 ```
 
 
@@ -351,14 +355,14 @@ cty_prep_to_match_PASS3 <- cty_prep_to_match_PASS3 %>% filter(!is.na(Address2))
 cl_prep_to_match_PASS3 <- cl_prep_to_match_PASS3 %>% filter(!is.na(Address2)) 
 
 
-nrow(cty_prep_to_match_PASS3) #1,240
-nrow(cl_prep_to_match_PASS3) #2,101
+# nrow(cty_prep_to_match_PASS3) #1,240
+# nrow(cl_prep_to_match_PASS3) #2,101
 
 pass3_matched <- cty_prep_to_match_PASS3 %>% inner_join(cl_prep_to_match_PASS3, by =  c("Address2", "City.y" = "City", "State.y" = "State", "Zip5", "Zip4")) 
 
-nrow(pass3_matched) #956
-pass3_matched %>% count(`PID #`) %>% filter(n>1) # PID == 10439 w 2 rows --> join created extra row
-pass3_matched %>% count(row_id) %>% filter(n>1)
+# nrow(pass3_matched) #956
+# pass3_matched %>% count(`PID #`) %>% filter(n>1) # PID == 10439 w 2 rows --> join created extra row
+# pass3_matched %>% count(row_id) %>% filter(n>1)
 
 cty_prep_to_match_PASS4 <- cty_prep_to_match_PASS3 %>% # should I anti-join here instead?
   filter(`PID #` %in% pass3_matched$`PID #` == FALSE)
@@ -372,19 +376,19 @@ cl_prep_to_match_PASS4 <- cl_prep_to_match_PASS3 %>%
 pass3_matched %>% filter(`PID #` == 10439)
 cl_prep_to_match_PASS3 %>% filter(row_id == "9626")
 
-pass3_matched %>% select(`Property Location`, PropertyLocation1, Address2) %>% 
-  mutate(dist = stringdist::stringdist(PropertyLocation1, Address2)) %>%
-  filter(dist >  0) %>% 
-  arrange(desc(dist))
+# pass3_matched %>% select(`Property Location`, PropertyLocation1, Address2) %>% 
+#   mutate(dist = stringdist::stringdist(PropertyLocation1, Address2)) %>%
+#   filter(dist >  0) %>% 
+#   arrange(desc(dist))
 
-original_newkent_county %>% filter(`PID #` == 10439)
-nk_2018 %>% filter(row_id == "9626")
-
-colnames(pass1_2_matched)
-print("  ")
-colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2))
-setdiff(colnames(pass1_2_matched), colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4)))
-setdiff(colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4)), colnames(pass1_2_matched))
+# original_newkent_county %>% filter(`PID #` == 10439)
+# nk_2018 %>% filter(row_id == "9626")
+# 
+# colnames(pass1_2_matched)
+# print("  ")
+# colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2))
+# setdiff(colnames(pass1_2_matched), colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4)))
+# setdiff(colnames(pass3_matched %>% select(-PropertyLocation1, -PropertyLocation2, -Address2, -Zip5, -Zip4)), colnames(pass1_2_matched))
 
 ### Combining everything for sf purposes - can ignore? 
 
@@ -393,15 +397,8 @@ pass1_2_3_matched <- rbind(pass1_2_matched %>% select(-Address2.x, -Zip5.x, -Zip
 
 
 ```{r}
-nrow(cty_prep_to_match_PASS4) #285
-nrow(cl_prep_to_match_PASS4) #1145
-
-cty_prep_to_match_PASS4  %>% count(Zip5)
-cl_prep_to_match_PASS4 %>% count(Zip5)
-
-cty_prep_to_match_PASS4  %>% filter(Zip5 == "23181") %>% .$Address2 %>% unique
-cl_prep_to_match_PASS4 %>% filter(Zip5 == "23181") %>% .$Address2 %>% unique
-
+# nrow(cty_prep_to_match_PASS4) #329
+# nrow(cl_prep_to_match_PASS4) #1123
 ```
 
 
@@ -443,6 +440,85 @@ PAss 1 + 2  + 3  + Pass 3 Missed + Leftovers
 7090 + 17 + 964 + 1123+ 187
 ```
 
+```{r}
+# cty_prep_to_match_PASS4
+# cty_returntomatchthese
+
+unmatched_cty_nonrepeats <- rbind(cty_prep_to_match_PASS4, cty_returntomatchthese)
+unmatched_cl_nonrepeats <- rbind(cl_prep_to_match_PASS4, cl_returntomatchthese)
+
+streets <- read.csv("~/git/dspg20broadbandERS/data/geocoding-output/street_abbreviations.csv")
+
+unmatched_cty_nonrepeats <- unmatched_cty_nonrepeats %>%
+  mutate(addr_mode = str_extract(`Property Location`, "\\b[A-Z]{2,3}$"),
+         PropertyLocation2 = str_squish(str_remove(`Property Location`, pattern = paste0(addr_mode, "$"))))
+
+######
+
+# nrow(unmatched_cty_nonrepeats) #2,051
+# nrow(unmatched_cl_nonrepeats) #1,310
+
+pass4_matched <- unmatched_cty_nonrepeats %>% inner_join(unmatched_cl_nonrepeats, by = "PropertyLocation2")
+
+nrow(pass4_matched) #889
+pass4_matched %>% count(`PID #`) %>% filter(n>1)
+pass4_matched %>% count(row_id) %>% filter(n>1)
+
+cty_prep_to_match_PASS5 <- unmatched_cty_nonrepeats %>% # should I anti-join here instead?
+  filter(`PID #` %in% pass4_matched$`PID #` == FALSE)
+
+cl_prep_to_match_PASS5 <- unmatched_cl_nonrepeats %>%
+  filter(row_id %in% pass4_matched$row_id == FALSE)
+
+
+```
+
+
+
+```{r}
+data.frame("PHASE" = c("Prep", "Set Aside", "Prep", "Matching", "Matching", "Matching", "Prep - 4", "Prep - 4", "Matching", "Prep/Missed"),
+           "STEP" = c("Preparation", "SET ASIDE - Address Repeats", "Non Repeats", 
+                      "Pass 1 - Full Add", # "Pass 1 - Missed",
+                      "Pass 2 - w/o Mode", #"Pass 2 - Missed",
+                      "Pass 3 - Stand Add w/o blanks", "MISSED - from Pass 3",
+                      "SET ASIDE - Stand Add Missing", "Pass 4", "MISSED - from Pass 4"
+                      ), 
+           "COUNTY" = c(nrow(cty_prep_to_match), sum(cty_prep_to_match$repeats),
+                        nrow(cty_prep_to_match) - sum(cty_prep_to_match$repeats),
+                        nrow(pass1_matched),# nrow(cty_prep_to_match_PASS2),
+                        nrow(pass2_matched), # nrow(cty_prep_to_match_PASS3),
+                        nrow(pass3_matched),  nrow(cty_prep_to_match_PASS4),
+                        nrow(cty_returntomatchthese),
+                        nrow(pass4_matched), nrow(cty_prep_to_match_PASS5)
+                        ), 
+           "CORELOGIC" = c(nrow(cl_prep_to_match), cl_prep_to_match %>% filter(repeats1 ==1|repeats2 == 1) %>% nrow(),
+                           nrow(cl_prep_to_match) - cl_prep_to_match %>% filter(repeats1 ==1|repeats2 == 1) %>% nrow(),
+                           nrow(pass1_matched), # nrow(cl_prep_to_match_PASS2),
+                           nrow(pass2_matched),# nrow(cl_prep_to_match_PASS3),
+                           nrow(pass3_matched), nrow(cl_prep_to_match_PASS4),
+                           nrow(cl_returntomatchthese),
+                           nrow(pass4_matched), nrow(cl_prep_to_match_PASS5)
+                           )
+           )
+```
+
+```{r}
+total_matched <- nrow(pass1_matched) + nrow(pass2_matched) + nrow(pass3_matched) + nrow(pass4_matched)
+```
+
+
+```{r}
+cty_prep_to_match_PASS_R <- cty_prep_to_match %>% 
+  filter(repeats == 1) 
+
+cl_prep_to_match_PASS_R <- cl_prep_to_match %>% 
+  filter(repeats1 == 1 | repeats2 == 1) 
+
+cty_prep_to_match_PASS_R %>% filter(str_detect(`Property Location`, "^\\d") == FALSE)
+cty_prep_to_match_PASS_R %>% filter(str_detect(`Property Location`, "^\\d") == TRUE)
+cl_prep_to_match_PASS_R %>% filter(str_detect(PropertyLocation1, "^NA"))
+cl_prep_to_match_PASS_R %>% filter(str_detect(PropertyLocation1, "^NA") == FALSE)
+```
 
 
 ## geocode CORELOGIC NEW KENT!!!
@@ -461,41 +537,150 @@ leaflet(pass1_matched_sf) %>%
   addCircleMarkers(radius = 0.5) 
 
 # What matched in rounds 1,2,3
-leaflet(pass1_matched_sf) %>%
+leaflet(pass1_2_3_matched_sf) %>%
   addTiles() %>%
-  addCircleMarkers(radius = 0.5) %>%
-  addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), lng = as.numeric(pass3_matched$parcel_level_longitude), radius = 0.5, color = "#32CD32")
+  addCircleMarkers(radius = 0.5) 
+  # addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), lng = as.numeric(pass3_matched$parcel_level_longitude), radius = 0.5, color = "#32CD32")
 
 # What hasn't matched in rounds 1,2,3
 
 unmatched_cty_pass4 <- cty_prep_to_match_PASS4 %>% filter(!is.na(lat))
 unmatched_cl_pass4 <- cl_prep_to_match_PASS4 %>% filter(!is.na(parcel_level_latitude))
 
-leaflet(pass1_matched_sf) %>%
+library(htmltools)
+
+leaflet(pass1_2_matched_sf) %>%
   addTiles() %>%
-  addCircleMarkers(radius = 0.5, color = "#32CD32") %>%
+  addCircleMarkers(radius = 0.5, color = "#32CD32", popup = ~htmlEscape(`Property Location`)) %>%
+  # Pass 3 Matched
   addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), 
                    lng = as.numeric(pass3_matched$parcel_level_longitude), 
-                   radius = 0.5, color = "#32CD32") %>%
+                   radius = 0.5, color = "#32CD32", 
+                   popup = ~htmlEscape(pass3_matched$`Property Location`)) %>%
+  # Unmatched CTY after Pass 3
   addCircleMarkers(lat = unmatched_cty_pass4$lat, lng = unmatched_cty_pass4$long, 
-                   radius  = 0.5, color = "#ff0000") %>%
+                   radius  = 0.5, color = "#ff0000",
+                   popup = ~htmlEscape(unmatched_cty_pass4$`Property Location`)) %>%
+  # Set aside CTY from blank stand address
   addCircleMarkers(lat = cty_returntomatchthese$lat, lng = cty_returntomatchthese$long, 
-                   radius  = 0.5, color = "#ff0000") %>% 
-  addCircleMarkers(lat = as.numeric(unmatched_cl_pass4$parcel_level_latitude), lng = as.numeric(unmatched_cl_pass4$parcel_level_longitude), 
-                   radius = 0.5, color = "#0000FF") %>%
-  addCircleMarkers(lat = as.numeric(cty_returntomatchthese$parcel_level_latitude), lng = as.numeric(cty_returntomatchthese$parcel_level_longitude), 
-                   radius = 0.5, color = "#0000FF")
+                   radius  = 0.5, color = "#ff0000",
+                   popup = ~htmlEscape(cty_returntomatchthese$`Property Location`)) %>% 
+  # Unmatched CL after pass 3
+  addCircleMarkers(lat = as.numeric(unmatched_cl_pass4$parcel_level_latitude), 
+                   lng =as.numeric(unmatched_cl_pass4$parcel_level_longitude), 
+                   radius = 0.5, color = "#0000FF",
+                   popup = ~htmlEscape(unmatched_cl_pass4$`PropertyLocation1`)) %>%
+  # Set aside CL from blank stand address
+  addCircleMarkers(lat = as.numeric(cl_returntomatchthese$parcel_level_latitude), lng = as.numeric(cl_returntomatchthese$parcel_level_longitude), 
+                   radius = 0.5, color = "#0000FF",
+                   popup = ~htmlEscape(cl_returntomatchthese$PropertyLocation1))
+
+
+leaflet(unmatched_cty_nonrepeats) %>%
+  addTiles() %>% 
+  addCircleMarkers(radius = 0.5, color = "#ff0000", popup = ~htmlEscape(`Property Location`)) %>%
+  addCircleMarkers(lat = as.numeric(unmatched_cl_nonrepeats$parcel_level_latitude), 
+                   lng = as.numeric(unmatched_cl_nonrepeats$parcel_level_longitude), 
+                   radius = 0.5, color = "#0000FF", popup = ~htmlEscape(unmatched_cl_nonrepeats$PropertyLocation1))
+
+leaflet() %>% 
+  addTiles() %>%
+  addCircleMarkers(radius = 0.5, lat = as.numeric(pass4_matched$parcel_level_latitude), lng = as.numeric(pass4_matched$parcel_level_longitude))
+
+leaflet(unmatched_cty_nonrepeats) %>%
+  addTiles() %>% 
+  addCircleMarkers(radius = 0.5, color = "#ff0000", popup = ~htmlEscape(`Property Location`)) %>%
+  addCircleMarkers(lat = as.numeric(unmatched_cl_nonrepeats$parcel_level_latitude), 
+                   lng = as.numeric(unmatched_cl_nonrepeats$parcel_level_longitude), 
+                   radius = 0.5, color = "#0000FF", popup = ~htmlEscape(unmatched_cl_nonrepeats$addr_rep)) %>%
+  addCircleMarkers(radius = 0.5, lat = as.numeric(pass4_matched$parcel_level_latitude), lng = as.numeric(pass4_matched$parcel_level_longitude), color = "#32CD32")
 
 
 ```
 
 
+WHAT MATCHED VIA WHAT PASS
+
+```{r}
+pass1_matched_sf <- pass1_matched %>% filter(!is.na(parcel_level_latitude)) %>% sf::st_as_sf(coords = c("parcel_level_longitude", "parcel_level_latitude"))
+library(htmltools)
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  # PASS 1 Matched
+  addCircleMarkers(lat = as.numeric(pass1_matched$parcel_level_latitude), lng = as.numeric(pass1_matched$parcel_level_longitude),
+                   radius = 0.5, color = "#ff6767", 
+                   popup = ~htmlEscape(pass1_matched$`Property Location`))  %>%
+  # PASS 2 MATCHED
+    addCircleMarkers(lat = as.numeric(pass2_matched$parcel_level_latitude), lng = as.numeric(pass2_matched$parcel_level_longitude),
+                   radius = 0.5, color = "#32CD32", 
+                   popup = ~htmlEscape(pass2_matched$`Property Location`)) %>%
+  # Pass 3 Matched
+  addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), 
+                   lng = as.numeric(pass3_matched$parcel_level_longitude), 
+                   radius = 0.5, color = "#41406d", 
+                   popup = ~htmlEscape(pass3_matched$`Property Location`))  %>%
+  # PASS 4 MAtched
+  addCircleMarkers(lat = as.numeric(pass4_matched$parcel_level_latitude), lng = as.numeric(pass4_matched$parcel_level_longitude),
+                   radius = 0.5, color = "#32CD32", 
+                   popup = ~htmlEscape(pass4_matched$`Property Location`))
+```
 
 
+```{r}
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  # PASS 4 Missed (prep for a future 5)
+  addCircleMarkers(lat = as.numeric(cty_prep_to_match_PASS5$lat), 
+                   lng = as.numeric(cty_prep_to_match_PASS5$long),
+                   radius = 0.5, color = "#ff6767", 
+                   popup = ~htmlEscape(cty_prep_to_match_PASS5$`Property Location`))  %>%
+  # PASS 4 Missed (prep for a future 5)
+    addCircleMarkers(lat = as.numeric(cl_prep_to_match_PASS5$parcel_level_latitude), 
+                     lng = as.numeric(cl_prep_to_match_PASS5$parcel_level_longitude),
+                   radius = 0.5, color = "#32CD32", 
+                   popup = ~htmlEscape(cl_prep_to_match_PASS5$PropertyLocation1)) %>%
+  setView(lat = 37.511136, lng = -77.009578, zoom = 11)
+
+```
 
 
+```{r}
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  # PREP - CTY REPEATS
+  addCircleMarkers(lat = as.numeric(cty_prep_to_match_PASS_R$lat), 
+                   lng = as.numeric(cty_prep_to_match_PASS_R$long), 
+                   radius = 0.5, color = "#ff6767", 
+                   popup = ~htmlEscape(cty_prep_to_match_PASS_R$`Property Location`))  %>%
+  # PREP - CL REPEATS
+  addCircleMarkers(lat = as.numeric(cl_prep_to_match_PASS_R$parcel_level_latitude), lng = as.numeric(cl_prep_to_match_PASS_R$parcel_level_longitude),
+                   radius = 0.5, color = "#32CD32", 
+                   popup = ~htmlEscape(cl_prep_to_match_PASS_R$PropertyLocation1)) %>%
+  setView(lat = 37.511136, lng = -77.009578, zoom = 11)
+```
+
+```{r}
+cty_prep_to_match_PASS_R_dig <- cty_prep_to_match_PASS_R %>% filter(str_detect(`Property Location`, "^\\d") == TRUE)
+cl_prep_to_match_PASS_R_dig <- cl_prep_to_match_PASS_R %>% filter(!is.na(situs_house_number))
+```
 
 
+```{r}
+
+
+leaflet(pass1_matched_sf) %>%
+  addTiles() %>%
+  # PREP - CTY REPEATS
+  addCircleMarkers(lat = as.numeric(cty_prep_to_match_PASS_R_dig$lat), 
+                   lng = as.numeric(cty_prep_to_match_PASS_R_dig$long), 
+                   radius = 0.5, color = "#ff6767", 
+                   popup = ~htmlEscape(cty_prep_to_match_PASS_R_dig$`Property Location`))  %>%
+  # PREP - CL REPEATS
+  addCircleMarkers(lat = as.numeric(cl_prep_to_match_PASS_R_dig$parcel_level_latitude), lng = as.numeric(cl_prep_to_match_PASS_R_dig$parcel_level_longitude),
+                   radius = 0.5, color = "#32CD32", 
+                   popup = ~htmlEscape(cl_prep_to_match_PASS_R_dig$PropertyLocation1)) %>%
+  setView(lat = 37.511136, lng = -77.009578, zoom = 11)
+```
 
 
 
@@ -516,7 +701,7 @@ leaflet(pass1_matched_sf) %>%
 
 OLD
 
-```{r}
+```{r eval = FALSE}
 cl_stand <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_cl_stand_addr_1.RDS")
 cty_stand <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/new_kent_stand_addr.RDS")
 
@@ -556,7 +741,7 @@ table(cty_matched_geo$geo_method)
 
 ```
 
-```{r}
+```{r eval = FALSE}
 cty_matched_geo <- readRDS("~/cl_cty_matched_geocoded.RDS") 
 
 original_newkent_county
@@ -581,7 +766,7 @@ data.frame("Results" = c("1. TOTAL", "2. POST_STAND", "3. MINUS NA", "4. MATCHED
 ```
 
 
-```{r}
+```{r eval = FALSE}
 
 library(leaflet)
 
@@ -660,7 +845,7 @@ leaflet(newkent) %>%
 ```
 
 
-```{r}
+```{r eval = FALSE}
 county_parsely <- subset_geocoded_nk %>% filter(str_detect(addr, "^12110"))
 
 corelogic_parsley <- subset_cl_nk %>% filter(situs_house_number == "12110")
@@ -758,7 +943,7 @@ df %>% filter(str_detect(CTY_addr, "^12110"))
 
 
 
-```{r}
+```{r eval = FALSE}
 
 
 # county_parsely <- subset_geocoded_nk %>% filter(str_detect(addr, "^12110"))
@@ -808,7 +993,7 @@ corelogic_parsley <- subset_cl_nk %>%
 ```
 
 
-```{r}
+```{r eval = FALSE}
 county_matchable <- subset_geocoded_nk  %>% 
   mutate(state = str_trim(str_remove_all(str_extract(addr, ", [A-Z]{2},"), "[[:punct:]]")), 
                           zip = str_extract(addr, "\\d{5}$|\\d{9}$|\\d{5}(-\\d{4})?$"),
@@ -848,7 +1033,7 @@ nrow(corelogic_matchable) + nrow(corelogic_notmatchable) == nrow(subset_cl_nk)
 
 ```
 
-```{r}
+```{r eval = FALSE}
 nrow(county_matchable ) #8030
 nrow(corelogic_matchable) #9244
 
@@ -869,7 +1054,7 @@ geocoded_newkent_county
 ```
 
 
-```{r}
+```{r eval = FALSE}
 
 ### First round of matching on full street address: house number, street name, street type
 
@@ -944,7 +1129,7 @@ sum(res$Matched)
 sum(res$Matched) #+ 695 == 8030
 ```
 
-```{r}
+```{r eval = FALSE}
 # loc.validate_address(address_2 = county_corelogic_matchless_c$addr, state = "VA", zip5 = county_corelogic_matchless_c$zip)
 
 library(sf)
@@ -962,7 +1147,7 @@ leaflet() %>%
 ```
 
 
-```{r}
+```{r eval = FALSE}
 8030 - (6085 + 2034)
 9244 - (6085 + 3222)
 ```
