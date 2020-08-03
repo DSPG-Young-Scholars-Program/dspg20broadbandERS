@@ -5,8 +5,8 @@ account: madeline-pickens
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2631652
-bundleId: 3465555
+bundleId: 3469221
 url: https://madeline-pickens.shinyapps.io/ERS-dataquality/
-when: 1596375013.82163
+when: 1596462259.35695
 asMultiple: FALSE
 asStatic: FALSE
