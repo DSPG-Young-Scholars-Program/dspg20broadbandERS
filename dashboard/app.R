@@ -13,9 +13,7 @@ source("theme.R")
 font = 'Arial'
 
 # Setting up data for map
-ffu_va <- read_csv('data/ffu_va_ruca.csv')
-va_tracts <- tracts(state = '51', year = 2018)
-ffu_merged <- geo_join(va_tracts, ffu_va, "GEOID", "GEOID")
+ffu_merged <- read_csv('data/ffu_va_merged.csv')
 
 
 va_table_long <- read_csv('data/va_table_long.csv')
