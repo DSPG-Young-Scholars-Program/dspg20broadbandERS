@@ -220,7 +220,7 @@ shinyApp(
                     ),
                     p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data", we were unable to calculate the fitness-for-use as a result of this missing data.'),
                     p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
-                    tableOutput('rucatable'))
+                    tableOutput('rucatable2'))
                   ),
                 #),
                 fluidRow(
@@ -609,6 +609,10 @@ shinyApp(
       ruca_def
     }, striped = TRUE)
 
+    output$rucatable2 <- renderTable({
+      ruca_def
+    }, striped = TRUE)
+    
     # Map inputs
     observe({
       x <- input$variable
