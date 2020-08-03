@@ -7,6 +7,7 @@ library(dashboardthemes)
 library(tidyverse)
 library(DT)
 library(gt)
+library(tigris)
 
 source("theme.R")
 
@@ -205,32 +206,40 @@ shinyApp(
         tabItem(tabName = "vamap",
                 fluidRow(
                   boxPlus(
+                    title = "Map Background",
+                    closable = FALSE,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    p("The map on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for three variables (housing type, year built, and value); see Data Sources and Methodology for explanation of how this is calculated. If the fitness-for-use value:"),
+                    tags$ul(
+                      tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
+                      tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
+                      tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
+                    ),
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data", we were unable to calculate the fitness-for-use as a result of this missing data.'),
+                    p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
+                    tableOutput('rucatable2'))
+                  ),
+                #),
+                fluidRow(
+                  boxPlus(
                     title = "Virginia Map",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     width = NULL,
-                    p("The map on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for INSERT VARIABLES PRESENTED (see Data Sources and Methodology for explanation of how this is calculated). If the fitness-for-use value:"),
-                    tags$ul(
-                      tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
-                      tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
-                      tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
-                    ),
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data", we were unable to calculate the fitness-for-use as a result of this missing data.')
-
-                  ),
-#                  h4('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. These missing census tracts have led to some county-level missing data in the fitness-for-use calculation.'),
-                  br()
-                ),
-                fluidRow(
-                  column(4,
+                    p("The map may take a few moments to load."),
+                    column(4,
                          radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
-                  column(4,
-                         selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value"))))
-                ),
-                leafletOutput("va_map")
-                ),
+                    column(4,
+                         selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
+                   
+                   leafletOutput("va_map")
+                   )
+                )),
 
 # VIRGINIA TABLE  ---------------------------------------------------------------------------------
         tabItem(tabName = "vatable",
@@ -600,6 +609,10 @@ shinyApp(
       ruca_def
     }, striped = TRUE)
 
+    output$rucatable2 <- renderTable({
+      ruca_def
+    }, striped = TRUE)
+    
     # Map inputs
     observe({
       x <- input$variable
