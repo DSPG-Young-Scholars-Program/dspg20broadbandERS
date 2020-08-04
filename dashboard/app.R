@@ -535,9 +535,10 @@ shinyApp(
       cty <- va_table_long %>%
         filter(County == filtervar) %>%
         filter(variable != 'Percent Rural') %>%
-        mutate(value = round(value, 2)) %>%
+        mutate(value = round(value, 2)) %>% ungroup() %>%
         dplyr::select(-County) %>%
-        rename('Variable' = 'variable') %>% gt() %>%
+        rename('Variable' = 'variable') %>% 
+        gt() %>%
         tab_style(
           style = cell_fill(color = "#D1E0BF"),
           locations = cells_body(
