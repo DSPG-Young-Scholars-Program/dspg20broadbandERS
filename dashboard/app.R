@@ -8,15 +8,19 @@ library(tidyverse)
 library(DT)
 library(gt)
 library(tigris)
+library(dplyr)
 
 source("theme.R")
 
 font = 'Arial'
 
 # Setting up data for map
-ffu_va <- read_csv('data/ffu_va_ruca.csv')
-va_tracts <- tracts(state = '51', year = 2018)
-ffu_merged <- geo_join(va_tracts, ffu_va, "GEOID", "GEOID")
+ffu_va <- readr::read_csv('data/ffu_va_ruca.csv') 
+# va_tracts <- tracts(state = '51', year = 2018)
+# saveRDS(va_tracts, "data/va_tracts_2018.RDS")
+va_tracts <- readRDS("data/va_tracts_2018.RDS")
+va_tracts$GEOID <- as.numeric(va_tracts$GEOID)
+ffu_merged <- va_tracts %>% left_join(ffu_va, by = c("GEOID"))
 
 vacounties_labels <- readRDS('data/vacounties_labels.RDS')
 vacounties <- readRDS('data/vacounties.RDS')
@@ -184,7 +188,7 @@ shinyApp(
                     column(4,
                          radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
                     column(4,
-                         selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
+                         selectInput("range", "Value Range", subset(colnames(ffu_merged), str_detect(colnames(ffu_merged), "value")))),
                    
                    leafletOutput("va_map")
                    )
@@ -578,13 +582,13 @@ shinyApp(
         y <- character(0)
       }
       if (x == "Property Value") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value"))
+        y <- subset(colnames(ffu_merged), str_detect(colnames(ffu_merged), "value"))
       }
       if (x == "Year Built") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "yrbuilt"))
+        y <- subset(colnames(ffu_merged), str_detect(colnames(ffu_merged), "yrbuilt"))
       }
       if (x == "Occupancy Status") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "occupancy"))
+        y <- subset(colnames(ffu_merged), str_detect(colnames(ffu_merged), "occupancy"))
       }
 
       updateSelectInput(session, "range", choices = y)
