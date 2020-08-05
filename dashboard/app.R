@@ -12,7 +12,7 @@ source("theme.R")
 font = 'Arial'
 
 # Setting up data for map
-ffu_merged <- readRDS('data/ffu_merged.RDS')
+#ffu_merged <- readRDS('data/ffu_merged.RDS')
 
 vacounties_labels <- readRDS('data/vacounties_labels.RDS')
 vacounties <- readRDS('data/vacounties.RDS')
@@ -56,11 +56,11 @@ shinyApp(
           text = "Virginia Counties",
           icon = icon("bar-chart")
         ),
-        menuItem(
-          tabName = "vamap",
-          text = "Virginia Map",
-          icon = icon("map-marked-alt")
-        ),
+        # menuItem(
+        #   tabName = "vamap",
+        #   text = "Virginia Map",
+        #   icon = icon("map-marked-alt")
+        # ),
         menuItem(
           tabName = "team",
           text = "Team",
@@ -148,43 +148,43 @@ shinyApp(
                 )),
 
 # VIRGINIA MAP ------------------------------------------------------------------------------------
-        tabItem(tabName = "vamap",
-                fluidRow(
-                  boxPlus(
-                    title = "Map Background",
-                    closable = FALSE,
-                    status = "warning",
-                    solidHeader = TRUE,
-                    collapsible = TRUE,
-                    width = NULL,
-                    p("The map on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for three variables (housing type, year built, and value); see Data Sources and Methodology for explanation of how this is calculated. If the fitness-for-use value:"),
-                    tags$ul(
-                      tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
-                      tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
-                      tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
-                    ),
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data", we were unable to calculate the fitness-for-use as a result of this missing data.'),
-                    p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
-                    tableOutput('rucatable2'))
-                  ),
-                #),
-                fluidRow(
-                  boxPlus(
-                    title = "Virginia Map",
-                    closable = FALSE,
-                    status = "warning",
-                    solidHeader = TRUE,
-                    collapsible = TRUE,
-                    width = NULL,
-                    p("The map may take a few moments to load."),
-                    column(4,
-                         radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
-                    column(4,
-                         selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
-                   
-                   leafletOutput("va_map")
-                   )
-                )),
+        # tabItem(tabName = "vamap",
+        #         fluidRow(
+        #           boxPlus(
+        #             title = "Map Background",
+        #             closable = FALSE,
+        #             status = "warning",
+        #             solidHeader = TRUE,
+        #             collapsible = TRUE,
+        #             width = NULL,
+        #             p("The map on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for three variables (housing type, year built, and value); see Data Sources and Methodology for explanation of how this is calculated. If the fitness-for-use value:"),
+        #             tags$ul(
+        #               tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
+        #               tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
+        #               tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
+        #             ),
+        #             p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data", we were unable to calculate the fitness-for-use as a result of this missing data.'),
+        #             p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
+        #             tableOutput('rucatable2'))
+        #           ),
+        #         #),
+        #         fluidRow(
+        #           boxPlus(
+        #             title = "Virginia Map",
+        #             closable = FALSE,
+        #             status = "warning",
+        #             solidHeader = TRUE,
+        #             collapsible = TRUE,
+        #             width = NULL,
+        #             p("The map may take a few moments to load."),
+        #             column(4,
+        #                  radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
+        #             column(4,
+        #                  selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
+        #            
+        #            leafletOutput("va_map")
+        #            )
+        #         )),
 
 # VIRGINIA TABLE  ---------------------------------------------------------------------------------
         tabItem(tabName = "vatable",
@@ -567,93 +567,93 @@ shinyApp(
       ruca_def
     }, striped = TRUE)
     
-    # Map inputs
-    observe({
-      x <- input$variable
-
-      if (x == "Number of Housing Units") {
-        y <- character(0)
-      }
-      if (x == "Property Value") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value"))
-      }
-      if (x == "Year Built") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "yrbuilt"))
-      }
-      if (x == "Occupancy Status") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "occupancy"))
-      }
-
-      updateSelectInput(session, "range", choices = y)
-    })
-
-    filteredData <- reactive({
-      if (input$variable == "Number of Housing Units") {
-        ffu_merged[["ffu_housing_units_total"]]
-      } else {
-        ffu_merged[[input$range]]
-      }
-    })
-
-    # Render leaflet map
-    output$va_map <- renderLeaflet({
-      bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
-      pal <- colorBin(palette = "BrBG", domain = ffu_merged$ffu_housing_units_total, bins = bins)
-      label <- paste(ffu_merged$County, "<br/>",
-                     "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
-                     "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
-                     "Fitness for Use: ", ifelse(test = is.na(ffu_merged$ffu_housing_units_total),
-                                                 yes = "No Data",
-                                                 no = round(ffu_merged$ffu_housing_units_total, 2)),
-                     sep = "") %>%
-        lapply(htmltools::HTML)
-
-
-      leaflet() %>%
-        addProviderTiles(providers$CartoDB.Positron) %>%
-        setView(lng = -79.4, lat = 38.177751, zoom = 7) %>%
-        addPolygons(data = ffu_merged,
-                    fillColor = ~pal(ffu_housing_units_total),
-                    color = "#808080",
-                    fillOpacity = 0.7,
-                    weight = 1,
-                    smoothFactor = 0.2,
-                    label = label) %>%
-        addLegend(pal = pal,
-                  values = ffu_merged$ffu_housing_units_total,
-                  position = "topleft",
-                  title = "Fitness for Use")
-    })
-
-    observe({
-      dat <- filteredData()
-
-      bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
-      pal <- colorBin(palette = "BrBG", domain = dat, bins = bins)
-      label <- paste(ffu_merged$County, "<br/>",
-                     "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
-                     "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
-                     "Fitness for Use: ", ifelse(test = is.na(dat),
-                                                 yes = "No Data",
-                                                 no = round(dat, 2)),
-                     sep = "") %>%
-        lapply(htmltools::HTML)
-
-      leafletProxy("va_map", data = dat) %>%
-        clearShapes() %>%
-        clearControls() %>%
-        addPolygons(data = ffu_merged,
-                    fillColor = ~pal(dat),
-                    color = "#808080",
-                    fillOpacity = 0.7,
-                    weight = 1,
-                    smoothFactor = 0.2,
-                    label = label) %>%
-        addLegend(pal = pal,
-                  values = dat,
-                  position = "topleft",
-                  title = "Fitness for Use")
-    })
+    # # Map inputs
+    # observe({
+    #   x <- input$variable
+    # 
+    #   if (x == "Number of Housing Units") {
+    #     y <- character(0)
+    #   }
+    #   if (x == "Property Value") {
+    #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value"))
+    #   }
+    #   if (x == "Year Built") {
+    #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "yrbuilt"))
+    #   }
+    #   if (x == "Occupancy Status") {
+    #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "occupancy"))
+    #   }
+    # 
+    #   updateSelectInput(session, "range", choices = y)
+    # })
+    # 
+    # filteredData <- reactive({
+    #   if (input$variable == "Number of Housing Units") {
+    #     ffu_merged[["ffu_housing_units_total"]]
+    #   } else {
+    #     ffu_merged[[input$range]]
+    #   }
+    # })
+    # 
+    # # Render leaflet map
+    # output$va_map <- renderLeaflet({
+    #   bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
+    #   pal <- colorBin(palette = "BrBG", domain = ffu_merged$ffu_housing_units_total, bins = bins)
+    #   label <- paste(ffu_merged$County, "<br/>",
+    #                  "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
+    #                  "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
+    #                  "Fitness for Use: ", ifelse(test = is.na(ffu_merged$ffu_housing_units_total),
+    #                                              yes = "No Data",
+    #                                              no = round(ffu_merged$ffu_housing_units_total, 2)),
+    #                  sep = "") %>%
+    #     lapply(htmltools::HTML)
+    # 
+    # 
+    #   leaflet() %>%
+    #     addProviderTiles(providers$CartoDB.Positron) %>%
+    #     setView(lng = -79.4, lat = 38.177751, zoom = 7) %>%
+    #     addPolygons(data = ffu_merged,
+    #                 fillColor = ~pal(ffu_housing_units_total),
+    #                 color = "#808080",
+    #                 fillOpacity = 0.7,
+    #                 weight = 1,
+    #                 smoothFactor = 0.2,
+    #                 label = label) %>%
+    #     addLegend(pal = pal,
+    #               values = ffu_merged$ffu_housing_units_total,
+    #               position = "topleft",
+    #               title = "Fitness for Use")
+    # })
+    # 
+    # observe({
+    #   dat <- filteredData()
+    # 
+    #   bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
+    #   pal <- colorBin(palette = "BrBG", domain = dat, bins = bins)
+    #   label <- paste(ffu_merged$County, "<br/>",
+    #                  "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
+    #                  "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
+    #                  "Fitness for Use: ", ifelse(test = is.na(dat),
+    #                                              yes = "No Data",
+    #                                              no = round(dat, 2)),
+    #                  sep = "") %>%
+    #     lapply(htmltools::HTML)
+    # 
+    #   leafletProxy("va_map", data = dat) %>%
+    #     clearShapes() %>%
+    #     clearControls() %>%
+    #     addPolygons(data = ffu_merged,
+    #                 fillColor = ~pal(dat),
+    #                 color = "#808080",
+    #                 fillOpacity = 0.7,
+    #                 weight = 1,
+    #                 smoothFactor = 0.2,
+    #                 label = label) %>%
+    #     addLegend(pal = pal,
+    #               values = dat,
+    #               position = "topleft",
+    #               title = "Fitness for Use")
+    # })
 
   }
 )
