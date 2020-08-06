@@ -87,17 +87,17 @@ shinyApp(
                     collapsible = TRUE,
                     h1("2020 DSPG USDA-ERS: Evaluating Residential Property Data Quality"),
                     h2("Project Description"),
-                    column(12, 
-                           img(src = "dspg-logo.png", style = "display: inline; float: right;", width = "200"),
-                           p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data.")
-                      ),
-                    h2("Project Goals"),
-                    p("The project sought to address the following questions:"),
-                    tags$ul(
-                      tags$li("What is the coverage and representativeness of CoreLogic 2018 property data compared to benchmark datasets, particularly for rural areas?"),
-                      tags$li("How can we scale this meaningfully to the state level when we only have property-level data for certain counties?")
-                    )
-                    ),
+                    column(12,
+                           img(src = "dspg-logo.png", style = "display: block; float: right;", width = "200"),
+                           p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data."),
+                           h2("Project Goals"),
+                           p("The project sought to address the following questions:"),
+                           tags$ul(
+                             tags$li("What is the coverage and representativeness of CoreLogic 2018 property data compared to benchmark datasets, particularly for rural areas?"),
+                             tags$li("How can we scale this meaningfully to the state level when we only have property-level data for certain counties?")
+                           )
+                           )
+                  ),
 
                   boxPlus(
                     title = "Our Approach",
@@ -168,8 +168,8 @@ shinyApp(
                       tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
                       tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
                     ),
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is greyed out, we were unable to calculate the fitness-for-use as a result of this missing data.'),
-                    (img(src = "static_maps.jpg", width = 1100))
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is greyed out, we were unable to calculate the fitness-for-use as a result of this missing data.')
+                    #(img(src = "static_maps.jpg", width = 1100))
                     #p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
                     #tableOutput('rucatable2')
                     )
@@ -177,32 +177,84 @@ shinyApp(
 
                 fluidRow(
                   boxPlus(
-                    title = "Map Takeaways",
+                    title = "Housing Units",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     width = NULL,
-                   p("Compared to ACS Housing Units, CoreLogic data tend to have:"),
-                   tags$ul(
-                     tags$li("Higher counts of housing units (gold shades)"),
-                     tags$li("Higher counts of occupied units (gold shades)"),
-                     tags$li("Lower counts of vacant units (blue shades)")
-                   ),
-                   p("Compared to ACS counts of housing units by Year Built, CoreLogic data tend to have lower counts (blue shades), except for housing units built since 2014."),
-                   p("Compared to ACS counts of housing units by Property Value, CoreLogic data tend to have:"),
-                   tags$ul(
-                     tags$li("Higher counts of housing units (gold shades) for property values up $150,000"),
-                     tags$li("Similar counts of housing units for property values from $150,000 to $750,00K with some variation"),
-                     tags$li("Nearly identifical counts of housing units for property values above $750,000")
-                   )
+                    (img(src = "ffu_housing_units_2.jpg", width = 1100)),
+                    p(""),
+                    p("Compared to ACS Housing Units, CoreLogic data tend to have:"),
+                    tags$ul(
+                      tags$li("Higher counts of housing units (gold shades)"),
+                      tags$li("Higher counts of occupied units (gold shades)"),
+                      tags$li("Lower counts of vacant units (blue shades)")
+                    )
                   )
-                )),
+                ),
+
+                fluidRow(
+                  boxPlus(
+                    title = "Year Built",
+                    closable = FALSE,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    (img(src = "ffu_year_built_2.jpg", width = 1100)),
+                    p("Compared to ACS counts of housing units by Year Built, CoreLogic data tend to have lower counts (blue shades), except for housing units built since 2014.")
+                  )
+                ),
+
+                fluidRow(
+                  boxPlus(
+                    title = "Property Values",
+                    closable = FALSE,
+                    status = "warning",
+                    solidHeader = TRUE,
+                    collapsible = TRUE,
+                    width = NULL,
+                    (img(src = "ffu_property_value_2.jpg", width = 1100)),
+                    p("Compared to ACS counts of housing units by Property Value, CoreLogic data tend to have:"),
+                    tags$ul(
+                      tags$li("Higher counts of housing units (gold shades) for property values up $150,000"),
+                      tags$li("Similar counts of housing units for property values from $150,000 to $750,00K with some variation"),
+                      tags$li("Nearly identifical counts of housing units for property values above $750,000")
+                    )
+                  )
+                )
+
+#                fluidRow(
+#                  boxPlus(
+#                    title = "Map Takeaways",
+#                    closable = FALSE,
+#                    status = "warning",
+#                    solidHeader = TRUE,
+#                    collapsible = TRUE,
+#                    width = NULL,
+#                   p("Compared to ACS Housing Units, CoreLogic data tend to have:"),
+#                   tags$ul(
+#                     tags$li("Higher counts of housing units (gold shades)"),
+#                     tags$li("Higher counts of occupied units (gold shades)"),
+#                     tags$li("Lower counts of vacant units (blue shades)")
+#                   ),
+#                   p("Compared to ACS counts of housing units by Year Built, CoreLogic data tend to have lower counts (blue shades), except for housing units built since 2014."),
+#                   p("Compared to ACS counts of housing units by Property Value, CoreLogic data tend to have:"),
+#                   tags$ul(
+#                     tags$li("Higher counts of housing units (gold shades) for property values up $150,000"),
+#                     tags$li("Similar counts of housing units for property values from $150,000 to $750,00K with some variation"),
+#                     tags$li("Nearly identifical counts of housing units for property values above $750,000")
+#                   )
+#                  )
+#                )
+
+),
         #             column(4,
         #                  radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
         #             column(4,
         #                  selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
-        #            
+        #
         #            leafletOutput("va_map")
         #            )
 
@@ -411,7 +463,7 @@ shinyApp(
                                img(src = "ffx_hist.png", width = 840, align = "center"),
                                img(src = "nk_hist2.png", width = 840, align = "center"))
                        )
-                       
+
                 ),
 
 # TEAM -------------------------------------------------------------------------------------------
@@ -426,18 +478,28 @@ shinyApp(
                     collapsible = FALSE,
                     p("The Data Science for the Public Good (DSPG) Young Scholars program is a summer immersive program held at the Biocomplexity Institute’s Social and Decision Analytics division (SDAD). In its seventh year, the program engages students from across the country to work together on projects that address state, federal, and local government challenges around critical social issues relevant in the world today.
                       DSPG young scholars conduct research at the intersection of statistics, computation, and the social sciences to determine how information generated within every community can be leveraged to improve quality of life and inform public policy."),
-                    h4(tags$a(href="https://github.com/mclaire19", "Madeline Pickens")),
-                    (img(src = "maddie.jpg", width = 250, height = 270)),
-                    p(""),
-                    p("DSPG 2020 Fellow, Georgetown University, Data Science for Public Policy"),
-                    h4(tags$a(href="https://github.com/mklutzke", "Morgan Klutzke")),
-                    (img(src = "morgan.png", width = 250, height = 270)),
-                    p(""),
-                    p("DSPG 2020 Intern, Indiana University, Psychology and Cognitive Science"),
-                    h4(tags$a(href="https://github.com/v-ramanan", "Vatsala Ramanan")),
-                    (img(src = "Vatsala_Ramanan.jpg", width = 250, height = 270)),
-                    p(""),
-                    p("DSPG 2020 Intern, Quantitative Economics and Government at Smith College")),
+                    column(4,
+                           h4(tags$a(href="https://github.com/mclaire19", "Madeline Pickens")),
+                           (img(src = "maddie.jpg", width = 250, height = 270)),
+                           p(""),
+                           p("DSPG 2020 Fellow, Georgetown University,"),
+                           p("Data Science for Public Policy")
+                           ),
+                    column(4,
+                           h4(tags$a(href="https://github.com/mklutzke", "Morgan Klutzke")),
+                           (img(src = "morgan.jpg", width = 250, height = 270)),
+                           p(""),
+                           p("DSPG 2020 Intern, Indiana University,"),
+                           p("Psychology and Cognitive Science")
+                           ),
+                    column(4,
+                           h4(tags$a(href="https://github.com/v-ramanan", "Vatsala Ramanan")),
+                           (img(src = "Vatsala_Ramanan.jpg", width = 250, height = 270)),
+                           p(""),
+                           p("DSPG 2020 Intern, Smith College,"),
+                           p("Quantitative Economics and Government")
+                           )
+                           ),
                   boxPlus(
                     title = "UVA SDAD members",
                     closable = FALSE,
@@ -557,7 +619,7 @@ shinyApp(
         filter(variable != 'Percent Rural') %>%
         mutate(value = round(value, 2)) %>% ungroup() %>%
         dplyr::select(-County) %>%
-        rename('Variable' = 'variable') %>% 
+        rename('Variable' = 'variable') %>%
         gt() %>%
         tab_style(
           style = cell_fill(color = "#D1E0BF"),
@@ -586,11 +648,11 @@ shinyApp(
     output$rucatable2 <- renderTable({
       ruca_def
     }, striped = TRUE)
-    
+
     # # Map inputs
     # observe({
     #   x <- input$variable
-    # 
+    #
     #   if (x == "Number of Housing Units") {
     #     y <- character(0)
     #   }
@@ -603,10 +665,10 @@ shinyApp(
     #   if (x == "Occupancy Status") {
     #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "occupancy"))
     #   }
-    # 
+    #
     #   updateSelectInput(session, "range", choices = y)
     # })
-    # 
+    #
     # filteredData <- reactive({
     #   if (input$variable == "Number of Housing Units") {
     #     ffu_merged[["ffu_housing_units_total"]]
@@ -614,7 +676,7 @@ shinyApp(
     #     ffu_merged[[input$range]]
     #   }
     # })
-    # 
+    #
     # # Render leaflet map
     # output$va_map <- renderLeaflet({
     #   bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
@@ -627,8 +689,8 @@ shinyApp(
     #                                              no = round(ffu_merged$ffu_housing_units_total, 2)),
     #                  sep = "") %>%
     #     lapply(htmltools::HTML)
-    # 
-    # 
+    #
+    #
     #   leaflet() %>%
     #     addProviderTiles(providers$CartoDB.Positron) %>%
     #     setView(lng = -79.4, lat = 38.177751, zoom = 7) %>%
@@ -644,10 +706,10 @@ shinyApp(
     #               position = "topleft",
     #               title = "Fitness for Use")
     # })
-    # 
+    #
     # observe({
     #   dat <- filteredData()
-    # 
+    #
     #   bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
     #   pal <- colorBin(palette = "BrBG", domain = dat, bins = bins)
     #   label <- paste(ffu_merged$County, "<br/>",
@@ -658,7 +720,7 @@ shinyApp(
     #                                              no = round(dat, 2)),
     #                  sep = "") %>%
     #     lapply(htmltools::HTML)
-    # 
+    #
     #   leafletProxy("va_map", data = dat) %>%
     #     clearShapes() %>%
     #     clearControls() %>%
