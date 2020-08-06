@@ -387,7 +387,7 @@ shinyApp(
 
                     h3("ACS Linkage"),
                     p("ACS provides estimates of counts for a selected geography (in our case, counts in a given census tract), while CoreLogic provides property-level data. Some assumptions were therefore necessary in order to match counts of CoreLogic property characteristics to ACS estimates."),
-                    p('To get the overall count of housing units and the occupancy status for each tract, we considered properties in CoreLogic that were coded as single family dwellings, condos, duplexes, apartments, or commercial condos to be "residential" properties. These residential properties were summed by census tract to get the "occupied" count, and properties coded in CoreLogic as "vacant" were summed to get the "vacant" count. "Total housing units" were considered to be the sum of the occupied and vacant counts.'),
+                    p('To get the overall count of housing units and the occupancy status for each tract, we considered properties in CoreLogic that were coded as single family dwellings, condos, duplexes, apartments, or commercial condos to be "residential" properties. These residential properties were summed by census tract to get the "occupied" count, and properties coded in CoreLogic as "vacant" were summed to get the "vacant" count. "Total housing units" were considered to be the sum of the occupied and vacant counts. It is worth noting that CoreLogic does not provide much information about how they categorize a property, so for some variables it was difficult to determine whether they should be considered "residential" or not. For example, one of the categories was commercial condo, which could be considered either a commerical or residential property type. Our decisions in grouping the data here could have resulted in a worse fit later when we linked the data to ACS.'),
                     p('To get the count of the year built variables, CoreLogic data were grouped based on its year built. The bins were constructed to match ACS bins; for example, a property constructed in 1975 would be grouped in the "1970-1979" year-built bin. The properties in each bin were then counted for each census tract'),
                     p('To get the count of the housing value variables, CoreLogic data were grouped based on its assessed total value variable. The bins were constructed to match ACS bins; for example, a property valued at $130,000 would be grouped in the "125,000 - 150,000" value bin. The properties in each bin were then counted for each census tract.'),
 
@@ -545,8 +545,8 @@ shinyApp(
               solidHeader = TRUE,
               collapsible = FALSE,
               p("The following data sources are provided for download. They present our calculated fitness-for-use statistics for housing variables by Virginia census tracts and for housing variables by Virginia counties. The county-level data includes the percent rurality measure calculated from the RUCA code of the census tracts it contains. The tract-level data contains the RUCA code and county of each census tract."),
-              p("Download county-level Virginia data here"),
-              p("Download tract-level Virginia data here")
+              p(tags$a(href='https://github.com/DSPG-Young-Scholars-Program/dspg20broadbandERS/blob/master/output/Public-Data/fitness-for-use-county-level-va.csv', "Download county-level Virginia data here")),
+              p(tags$a(href='https://github.com/DSPG-Young-Scholars-Program/dspg20broadbandERS/blob/master/output/Public-Data/fitness-for-use-tract-level-va.csv', "Download tract-level Virginia data here"))
               )))
       )
     ))
