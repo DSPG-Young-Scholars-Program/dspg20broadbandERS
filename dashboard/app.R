@@ -12,7 +12,7 @@ source("theme.R")
 font = 'Arial'
 
 # Setting up data for map
-ffu_merged <- readRDS('data/ffu_merged.RDS')
+#ffu_merged <- readRDS('data/ffu_merged.RDS')
 
 vacounties_labels <- readRDS('data/vacounties_labels.RDS')
 vacounties <- readRDS('data/vacounties.RDS')
@@ -29,7 +29,7 @@ shinyApp(
   ui = dashboardPagePlus(
     title = "DashboardPage",
     header = dashboardHeaderPlus(
-      title = "DSPG 2020"
+      title = "DSPG 2020 ERS"
       ),
 
 # SIDEBAR (LEFT) ----------------------------------------------------------
@@ -58,7 +58,7 @@ shinyApp(
         ),
         menuItem(
           tabName = "vamap",
-          text = "Virginia Map",
+          text = "Virginia Maps",
           icon = icon("map-marked-alt")
         ),
         menuItem(
@@ -87,7 +87,13 @@ shinyApp(
                     collapsible = TRUE,
                     h1("2020 DSPG USDA-ERS: Evaluating Residential Property Data Quality"),
                     h2("Project Description"),
-                    p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data."),
+                    fluidRow(column(4,
+                             (img(src = "dspg-logo.png", width = 220))
+                             ),
+                             column(8,
+                                    p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data.")
+                             )
+                             ),
                     h2("Project Goals"),
                     p("The project sought to address the following questions:"),
                     tags$ul(
@@ -104,7 +110,7 @@ shinyApp(
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     p("Our project process included the following elements of the data science framework:"),
-                    h4("Data Discovery"),
+                    h3("Data Discovery"),
                     p("We undertook a data discovery process to find datasets to benchmark against the proprietary CoreLogic housing dataset. We considered sample size, accessibility, geography, variables provided, and unit of analysis to ensure the datasets were appropriate and useful to the project. We narrowed down our findings to:"),
                       tags$ul(
                         tags$li("Property data from Fairfax County, Virginia, which is primarily affluent and urban"),
@@ -119,12 +125,12 @@ shinyApp(
                       tags$li("USPS Vacancy Data"),
                       tags$li("Housing Assistance Council"),
                       tags$li("Housing Mortgage Disclosure Act")),
-                    h4("Data Profiling"),
+                    h3("Data Profiling"),
                     p("We profiled the CoreLogic data subset for Fairfax County and New Kent County in Virginia, in addition to the Fairfax County and New Kent County property data, to compare the completeness and variables included in each dataset."),
-                    h4("Data Preparation and Linkage"),
+                    h3("Data Preparation and Linkage"),
                     p("We used the Census geocoder to geocode the subsets of the CoreLogic data for Fairfax and New Kent that did not have a property-level latitude and longitude. We also geocoded the New Kent County data as latitude and longitude was not provided in the original data. We attempted record linkage between the county and CoreLogic data and learned that linkage on raw latitude and longitude is not possible because CoreLogic data records a latitude and longitude in the middle of the parcel, while the geocoder we used places the latitude and longitude at the border of the property. We discuss further record linkage attempts in the methodology section."),
                     p("We additionally grouped the CoreLogic data by census tract and created equivalent variables to ACS estimates for total housing counts, vacancy status, year built, and assessed property value. We then linked these estimates at the census tract level and began exploring the differences between CoreLogic and ACS estimates."),
-                    h4("Statistical Analysis"),
+                    h3("Statistical Analysis"),
                     p("Using the linked CoreLogic and ACS data, we benchmarked the CoreLogic data using a \"fitness-for-use\" metric derived from a previous Census partnership. This is discussed more in the methodology section. The fitness-for-use metric takes into account both the ACS estimate and the ACS margin of error when comparing with the CoreLogic values.")
                   ),
                   boxPlus(
@@ -151,40 +157,55 @@ shinyApp(
         tabItem(tabName = "vamap",
                 fluidRow(
                   boxPlus(
-                    title = "Map Background",
+                    title = "Background and Maps",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     width = NULL,
-                    p("The map on this page presents a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for three variables (housing type, year built, and value); see Data Sources and Methodology for explanation of how this is calculated. If the fitness-for-use value:"),
+                    p("The maps on this page present a fitness-for-use metric that compares 2018 CoreLogic property data to the American Community Survey for three variables (housing type, year built, and value); see Data Sources and Methodology for explanation of how this is calculated. If the fitness-for-use value:"),
                     tags$ul(
                       tags$li("is negative, this indicates that the CoreLogic value is larger than the ACS estimate."),
                       tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
                       tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
                     ),
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is listed as "No Data", we were unable to calculate the fitness-for-use as a result of this missing data.'),
-                    p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
-                    tableOutput('rucatable2'))
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is greyed out, we were unable to calculate the fitness-for-use as a result of this missing data.'),
+                    (img(src = "static_maps.jpg", width = 1100))
+                    #p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
+                    #tableOutput('rucatable2')
+                    )
                   ),
-                #),
+
                 fluidRow(
                   boxPlus(
-                    title = "Virginia Map",
+                    title = "Map Takeaways",
                     closable = FALSE,
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
                     width = NULL,
-                    p("The map may take a few moments to load."),
-                    column(4,
-                         radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
-                    column(4,
-                         selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
-                   
-                   leafletOutput("va_map")
+                   p("Compared to ACS Housing Units, CoreLogic data tend to have:"),
+                   tags$ul(
+                     tags$li("Higher counts of housing units (gold shades)"),
+                     tags$li("Higher counts of occupied units (gold shades)"),
+                     tags$li("Lower counts of vacant units (blue shades)")
+                   ),
+                   p("Compared to ACS counts of housing units by Year Built, CoreLogic data tend to have lower counts (blue shades), except for housing units built since 2014."),
+                   p("Compared to ACS counts of housing units by Property Value, CoreLogic data tend to have:"),
+                   tags$ul(
+                     tags$li("Higher counts of housing units (gold shades) for property values up $150,000"),
+                     tags$li("Similar counts of housing units for property values from $150,000 to $750,00K with some variation"),
+                     tags$li("Nearly identifical counts of housing units for property values above $750,000")
                    )
+                  )
                 )),
+        #             column(4,
+        #                  radioButtons("variable", "Variable", c("Number of Housing Units", "Property Value", "Year Built", "Occupancy Status"))),
+        #             column(4,
+        #                  selectInput("range", "Value Range", subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value")))),
+        #            
+        #            leafletOutput("va_map")
+        #            )
 
 # VIRGINIA TABLE  ---------------------------------------------------------------------------------
         tabItem(tabName = "vatable",
@@ -317,7 +338,7 @@ shinyApp(
                     h3("Fitness-for-Use Metric"),
                     p('One challenge of evaluating the coverage of CoreLogic data is that there is no "gold standard" comparison. While ACS data is rigorously collected and evaluated, it is still survey data and may be unreliable, particularly in the rural areas we are most interested in. CoreLogic data may be more accurate than ACS data for variables that are more consistently reported in tax assessments than by individuals on a survey. Therefore, we need to make comparisons in a way that accounts for these differences in the datasets while also providing information about how these differences are exhibited.'),
                     p('We use the following "fitness-for-use" metric to make these comparisons (Keller, Shipp, Orr, et al. 2016).'),
-                    (img(src = "ffu_equation.png", width = 370, height = 50)),
+                    (img(src = "ffu_equation.png", width = 450)),
                     p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicates that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.'),
 
                     h3("Geocoding"),
@@ -410,14 +431,14 @@ shinyApp(
                     (img(src = "maddie.jpg", width = 250, height = 270)),
                     p(""),
                     p("DSPG 2020 Fellow, Georgetown University, Data Science for Public Policy"),
-                    h4(tags$a(href="https://github.com/v-ramanan", "Vatsala Ramanan")),
-                    (img(src = "Vatsala_Ramanan.jpg", width = 250, height = 270)),
-                    p(""),
-                    p("DSPG 2020 Intern, Quantitative Economics and Government at Smith College"),
                     h4(tags$a(href="https://github.com/mklutzke", "Morgan Klutzke")),
                     (img(src = "morgan.png", width = 250, height = 270)),
                     p(""),
-                    p("DSPG 2020 Intern, Indiana University, Psychology and Cognitive Science")),
+                    p("DSPG 2020 Intern, Indiana University, Psychology and Cognitive Science"),
+                    h4(tags$a(href="https://github.com/v-ramanan", "Vatsala Ramanan")),
+                    (img(src = "Vatsala_Ramanan.jpg", width = 250, height = 270)),
+                    p(""),
+                    p("DSPG 2020 Intern, Quantitative Economics and Government at Smith College")),
                   boxPlus(
                     title = "UVA SDAD members",
                     closable = FALSE,
@@ -442,7 +463,7 @@ shinyApp(
                     collapsible = FALSE,
                     h4(tags$a(href="https://www.ers.usda.gov/authors/ers-staff-directory/john-pender/", "John Pender")),
                     p("Rural Liaison, Rural Economy Branch,  Economic Research Service, US  Department of Agriculture"),
-                    (img(src = "ers.jpeg", width = 200, height = 140))
+                    (img(src = "ers.jpeg", width = 220))
                   )
                 ))
       )
@@ -567,93 +588,93 @@ shinyApp(
       ruca_def
     }, striped = TRUE)
     
-    # Map inputs
-    observe({
-      x <- input$variable
-
-      if (x == "Number of Housing Units") {
-        y <- character(0)
-      }
-      if (x == "Property Value") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value"))
-      }
-      if (x == "Year Built") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "yrbuilt"))
-      }
-      if (x == "Occupancy Status") {
-        y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "occupancy"))
-      }
-
-      updateSelectInput(session, "range", choices = y)
-    })
-
-    filteredData <- reactive({
-      if (input$variable == "Number of Housing Units") {
-        ffu_merged[["ffu_housing_units_total"]]
-      } else {
-        ffu_merged[[input$range]]
-      }
-    })
-
-    # Render leaflet map
-    output$va_map <- renderLeaflet({
-      bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
-      pal <- colorBin(palette = "BrBG", domain = ffu_merged$ffu_housing_units_total, bins = bins)
-      label <- paste(ffu_merged$County, "<br/>",
-                     "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
-                     "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
-                     "Fitness for Use: ", ifelse(test = is.na(ffu_merged$ffu_housing_units_total),
-                                                 yes = "No Data",
-                                                 no = round(ffu_merged$ffu_housing_units_total, 2)),
-                     sep = "") %>%
-        lapply(htmltools::HTML)
-
-
-      leaflet() %>%
-        addProviderTiles(providers$CartoDB.Positron) %>%
-        setView(lng = -79.4, lat = 38.177751, zoom = 7) %>%
-        addPolygons(data = ffu_merged,
-                    fillColor = ~pal(ffu_housing_units_total),
-                    color = "#808080",
-                    fillOpacity = 0.7,
-                    weight = 1,
-                    smoothFactor = 0.2,
-                    label = label) %>%
-        addLegend(pal = pal,
-                  values = ffu_merged$ffu_housing_units_total,
-                  position = "topleft",
-                  title = "Fitness for Use")
-    })
-
-    observe({
-      dat <- filteredData()
-
-      bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
-      pal <- colorBin(palette = "BrBG", domain = dat, bins = bins)
-      label <- paste(ffu_merged$County, "<br/>",
-                     "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
-                     "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
-                     "Fitness for Use: ", ifelse(test = is.na(dat),
-                                                 yes = "No Data",
-                                                 no = round(dat, 2)),
-                     sep = "") %>%
-        lapply(htmltools::HTML)
-
-      leafletProxy("va_map", data = dat) %>%
-        clearShapes() %>%
-        clearControls() %>%
-        addPolygons(data = ffu_merged,
-                    fillColor = ~pal(dat),
-                    color = "#808080",
-                    fillOpacity = 0.7,
-                    weight = 1,
-                    smoothFactor = 0.2,
-                    label = label) %>%
-        addLegend(pal = pal,
-                  values = dat,
-                  position = "topleft",
-                  title = "Fitness for Use")
-    })
+    # # Map inputs
+    # observe({
+    #   x <- input$variable
+    # 
+    #   if (x == "Number of Housing Units") {
+    #     y <- character(0)
+    #   }
+    #   if (x == "Property Value") {
+    #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "value"))
+    #   }
+    #   if (x == "Year Built") {
+    #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "yrbuilt"))
+    #   }
+    #   if (x == "Occupancy Status") {
+    #     y <- subset(colnames(ffu_merged@data), str_detect(colnames(ffu_merged@data), "occupancy"))
+    #   }
+    # 
+    #   updateSelectInput(session, "range", choices = y)
+    # })
+    # 
+    # filteredData <- reactive({
+    #   if (input$variable == "Number of Housing Units") {
+    #     ffu_merged[["ffu_housing_units_total"]]
+    #   } else {
+    #     ffu_merged[[input$range]]
+    #   }
+    # })
+    # 
+    # # Render leaflet map
+    # output$va_map <- renderLeaflet({
+    #   bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
+    #   pal <- colorBin(palette = "BrBG", domain = ffu_merged$ffu_housing_units_total, bins = bins)
+    #   label <- paste(ffu_merged$County, "<br/>",
+    #                  "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
+    #                  "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
+    #                  "Fitness for Use: ", ifelse(test = is.na(ffu_merged$ffu_housing_units_total),
+    #                                              yes = "No Data",
+    #                                              no = round(ffu_merged$ffu_housing_units_total, 2)),
+    #                  sep = "") %>%
+    #     lapply(htmltools::HTML)
+    # 
+    # 
+    #   leaflet() %>%
+    #     addProviderTiles(providers$CartoDB.Positron) %>%
+    #     setView(lng = -79.4, lat = 38.177751, zoom = 7) %>%
+    #     addPolygons(data = ffu_merged,
+    #                 fillColor = ~pal(ffu_housing_units_total),
+    #                 color = "#808080",
+    #                 fillOpacity = 0.7,
+    #                 weight = 1,
+    #                 smoothFactor = 0.2,
+    #                 label = label) %>%
+    #     addLegend(pal = pal,
+    #               values = ffu_merged$ffu_housing_units_total,
+    #               position = "topleft",
+    #               title = "Fitness for Use")
+    # })
+    # 
+    # observe({
+    #   dat <- filteredData()
+    # 
+    #   bins <- c(-Inf, -10, -5, -2, -1, 1, 2, 5, 10, Inf)
+    #   pal <- colorBin(palette = "BrBG", domain = dat, bins = bins)
+    #   label <- paste(ffu_merged$County, "<br/>",
+    #                  "Census tract: ", str_sub(ffu_merged$GEOID, 6), "<br/>",
+    #                  "RUCA Code: ", ffu_merged$RUCA1, "<br/>",
+    #                  "Fitness for Use: ", ifelse(test = is.na(dat),
+    #                                              yes = "No Data",
+    #                                              no = round(dat, 2)),
+    #                  sep = "") %>%
+    #     lapply(htmltools::HTML)
+    # 
+    #   leafletProxy("va_map", data = dat) %>%
+    #     clearShapes() %>%
+    #     clearControls() %>%
+    #     addPolygons(data = ffu_merged,
+    #                 fillColor = ~pal(dat),
+    #                 color = "#808080",
+    #                 fillOpacity = 0.7,
+    #                 weight = 1,
+    #                 smoothFactor = 0.2,
+    #                 label = label) %>%
+    #     addLegend(pal = pal,
+    #               values = dat,
+    #               position = "topleft",
+    #               title = "Fitness for Use")
+    # })
 
   }
 )
