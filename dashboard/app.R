@@ -173,7 +173,7 @@ shinyApp(
                       tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
                       tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
                     ),
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is greyed out, we were unable to calculate the fitness-for-use as a result of this missing data.')
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete (out of 1907 tracts, 133 were missing). The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the tract in the map is greyed out, we were unable to calculate the fitness-for-use as a result of this missing data.')
                     #(img(src = "static_maps.jpg", width = 1100))
                     #p('Hover over the map to see information on the county and RUCA code of each census tract as well as the exact fitness-for-use value. RUCA codes (discussed more in the Data & Methodology tab) have the following definitions:'),
                     #tableOutput('rucatable2')
@@ -279,7 +279,7 @@ shinyApp(
                       tags$li("is positive, this indicates that the ACS estimate is larger than the CoreLogic value."),
                       tags$li("falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.")
                     ),
-                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete. The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots are blank.'),
+                    p('The census tract variable in the 2018 Virginia CoreLogic data was 93 percent complete (out of 1907 tracts, 133 were missing). The missing census tracts have led to some county-level missing data in the fitness-for-use calculation. If the county in the dropdown is listed as "No Data Available", we were unable to calculate the fitness-for-use as a result of this missing data, and the associated table and plots are blank.'),
                     selectInput(
                       inputId = 'vacty',
                       label = 'Select a Virginia County',
@@ -398,7 +398,7 @@ shinyApp(
                     p('If the resulting value is negative, this indicates that the CoreLogic value is larger than the ACS estimate. If the value is positive, this indicates that the ACS estimate is larger than the CoreLogic value. When the value falls outside of the -1 to 1 range, this indicates that the CoreLogic value does not fall between the 90 percent ACS margin of error.'),
 
                     h3("Geocoding"),
-                    p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access the Census geocoder and geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
+                    p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access two geocoding engines: the Census geocoder and the Open Street Map (OSM) geocoder. We ran the Census geocoder first, followed by the OSM geocoder for the portion of properties that could not be geocoded by the Census engine, to geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
                     p("However, a direct join of the data on the latitude and longitude was not possible because of the differences in the geocoding of the data. CoreLogic's method for geocoding places the location in the center of the property, while the Census geocoder places the location where the property mailbox is located. For larger parcels, these locations can be quite different."),
                     p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance() function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
                     p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, this would require a combination of manual encoding and encoding with the API to join more of the data. Instead, we present our data profiling results for the county data as another comparison to CoreLogic.")
@@ -543,7 +543,10 @@ shinyApp(
               width = NULL,
               status = "warning",
               solidHeader = TRUE,
-              collapsible = FALSE
+              collapsible = FALSE,
+              p("The following data sources are provided for download. They present our calculated fitness-for-use statistics for housing variables by Virginia census tracts and for housing variables by Virginia counties. The county-level data includes the percent rurality measure calculated from the RUCA code of the census tracts it contains. The tract-level data contains the RUCA code and county of each census tract."),
+              p("Download county-level Virginia data here"),
+              p("Download tract-level Virginia data here")
               )))
       )
     ))
