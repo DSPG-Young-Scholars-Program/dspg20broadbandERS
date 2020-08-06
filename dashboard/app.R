@@ -65,6 +65,11 @@ shinyApp(
           tabName = "team",
           text = "Team",
           icon = icon("user-friends")
+        ),
+        menuItem(
+          tabName = "download",
+          text = "Data Download",
+          icon = icon("cloud-download")
         )
       )
     ),
@@ -431,7 +436,7 @@ shinyApp(
                     p(""),
                     p("DSPG 2020 Fellow, Georgetown University, Data Science for Public Policy"),
                     h4(tags$a(href="https://github.com/mklutzke", "Morgan Klutzke")),
-                    (img(src = "morgan.png", width = 250, height = 270)),
+                    (img(src = "morgan.jpg", width = 250, height = 270)),
                     p(""),
                     p("DSPG 2020 Intern, Indiana University, Psychology and Cognitive Science"),
                     h4(tags$a(href="https://github.com/v-ramanan", "Vatsala Ramanan")),
@@ -464,7 +469,18 @@ shinyApp(
                     p("Rural Liaison, Rural Economy Branch,  Economic Research Service, US  Department of Agriculture"),
                     (img(src = "ers.jpeg", width = 220))
                   )
-                ))
+                )),
+# DOWNLOAD -------------------------------------------------------------------------------------------
+        tabItem(tabName = "download",
+            fluidRow(
+              boxPlus(
+              title = "Data Download",
+              closable = FALSE,
+              width = NULL,
+              status = "warning",
+              solidHeader = TRUE,
+              collapsible = FALSE
+              )))
       )
     ))
 ),
