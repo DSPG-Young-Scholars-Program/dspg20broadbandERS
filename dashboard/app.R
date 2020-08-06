@@ -87,13 +87,13 @@ shinyApp(
                     collapsible = TRUE,
                     h1("2020 DSPG USDA-ERS: Evaluating Residential Property Data Quality"),
                     h2("Project Description"),
-                    fluidRow(column(4,
-                             (img(src = "dspg-logo.png", width = 220))
-                             ),
-                             column(8,
-                                    p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data.")
-                             )
-                             ),
+                    # fluidRow(column(4,
+                    #          div(img(src = "dspg-logo.png", width = 220, style="text-align: center;"))
+                    #          ),
+                    #          column(8,
+                    #          )
+                    #          ),
+                    p("To explore the influence of broadband access on rural property values, this project evaluates the quality of CoreLogic property data, which is aggregated commercial and residential property data based on county tax assessments and property deeds. We are comparing American Community Survey estimates to CoreLogic counts and estimates for relevant housing variables. Property-level comparisons at the national level would not be possible without access to the underlying local data. We additionally focus on two Virginia counties for which we have local property-level data, Fairfax County and New Kent County, as case studies for additional data quality evaluations. This project will enable the Social and Decision Analytics team and other CoreLogic data users to learn about the strengths and limitations of CoreLogic data."),
                     h2("Project Goals"),
                     p("The project sought to address the following questions:"),
                     tags$ul(
