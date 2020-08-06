@@ -65,6 +65,11 @@ shinyApp(
           tabName = "team",
           text = "Team",
           icon = icon("user-friends")
+        ),
+        menuItem(
+          tabName = "download",
+          text = "Data Download",
+          icon = icon("cloud-download")
         )
       )
     ),
@@ -478,6 +483,7 @@ shinyApp(
                     collapsible = FALSE,
                     p("The Data Science for the Public Good (DSPG) Young Scholars program is a summer immersive program held at the Biocomplexity Institute’s Social and Decision Analytics division (SDAD). In its seventh year, the program engages students from across the country to work together on projects that address state, federal, and local government challenges around critical social issues relevant in the world today.
                       DSPG young scholars conduct research at the intersection of statistics, computation, and the social sciences to determine how information generated within every community can be leveraged to improve quality of life and inform public policy."),
+
                     column(4,
                            h4(tags$a(href="https://github.com/mclaire19", "Madeline Pickens")),
                            (img(src = "maddie.jpg", width = 250, height = 270)),
@@ -500,6 +506,7 @@ shinyApp(
                            p("Quantitative Economics and Government")
                            )
                            ),
+                  
                   boxPlus(
                     title = "UVA SDAD members",
                     closable = FALSE,
@@ -526,7 +533,18 @@ shinyApp(
                     p("Rural Liaison, Rural Economy Branch,  Economic Research Service, US  Department of Agriculture"),
                     (img(src = "ers.jpeg", width = 220))
                   )
-                ))
+                )),
+# DOWNLOAD -------------------------------------------------------------------------------------------
+        tabItem(tabName = "download",
+            fluidRow(
+              boxPlus(
+              title = "Data Download",
+              closable = FALSE,
+              width = NULL,
+              status = "warning",
+              solidHeader = TRUE,
+              collapsible = FALSE
+              )))
       )
     ))
 ),
