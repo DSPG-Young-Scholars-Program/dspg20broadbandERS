@@ -401,7 +401,8 @@ shinyApp(
                     p("In an attempt to link the properties in the Fairfax and New Kent County data to their CoreLogic counterparts, we used the tidygeocoder R package to access two geocoding engines: the Census geocoder and the Open Street Map (OSM) geocoder. We ran the Census geocoder first, followed by the OSM geocoder for the portion of properties that could not be geocoded by the Census engine, to geocode the portion of the CoreLogic data for which latitude and longitude was missing. We also did this for the New Kent County data, which did not include a latitude and longitude."),
                     p("However, a direct join of the data on the latitude and longitude was not possible because of the differences in the geocoding of the data. CoreLogic's method for geocoding places the location in the center of the property, while the Census geocoder places the location where the property mailbox is located. For larger parcels, these locations can be quite different."),
                     p("Since a direct join didn't work, we attempted to use a minimum distance algorithm to join the properties. The basic idea behind this algorithm is to calculate the minimum distance between every address in a set (in our case, using the st_distance() function in the R package `sf`) and join based on this distance. However, this also was not effective, as a point at the boundary of a large parcel may actually be closer to a point at the middle of a different parcel. This could mean that properties would join incorrectly."),
-                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, this would require a combination of manual encoding and encoding with the API to join more of the data. Instead, we present our data profiling results for the county data as another comparison to CoreLogic.")
+                    p("Given that two methods of linking the properties on longitude and latitude did not work, we decided to attempt joining on the addresses themselves. This presented some problems of its own, as the addresses could be formatted inconsistently across datasets. One possible solution to this would be to use a USPS API to standardize these addresses. However, this standardization only worked for a subset of addresses. At this point, this would require a combination of manual encoding and encoding with the API to join more of the data. Instead, we present our data profiling results for the county data as another comparison to CoreLogic."),
+                    htmlOutput("frame")
                   ),
                   boxPlus(
                     title = "References",
@@ -757,6 +758,13 @@ shinyApp(
     #               position = "topleft",
     #               title = "Fitness for Use")
     # })
+    
+    output$frame <- renderUI({
+      # test = "<iframe src="//www.slideshare.net/slideshow/embed_code/key/NA8Kvwuy6F4DNX" width="595" height="485" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="//www.slideshare.net/DevikaNair15/geocoding-linkage-results" title="Geocoding linkage results" target="_blank">Geocoding linkage results</a> </strong> from <strong><a href="https://www.slideshare.net/DevikaNair15" target="_blank">Devika Mahoney-Nair</a></strong> </div>"
+      my_test <- tags$iframe(src="//www.slideshare.net/slideshow/embed_code/key/NA8Kvwuy6F4DNX", height=485, width=595)
+      # print(my_test)
+      my_test
+    }) 
 
   }
 )
