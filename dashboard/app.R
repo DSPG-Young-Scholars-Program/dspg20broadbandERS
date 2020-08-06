@@ -106,7 +106,7 @@ shinyApp(
                     status = "warning",
                     solidHeader = TRUE,
                     collapsible = TRUE,
-                    p("Our project process included the following elements of the data science framework:"),
+                    p("Our project process included the following elements of the data science framework (pictured below):"),
                     h3("Data Discovery"),
                     column(12,
                            img(src = "ds-framework.png", style = "display: inline; float: right;", width = "500px"),
