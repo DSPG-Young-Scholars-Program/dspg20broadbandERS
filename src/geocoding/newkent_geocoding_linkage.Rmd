@@ -526,20 +526,20 @@ cl_prep_to_match_PASS_R %>% filter(str_detect(PropertyLocation1, "^NA") == FALSE
 ```{r}
 library(leaflet)
 
-table(is.na(pass1_2_matched$parcel_level_latitude))
+# table(is.na(pass1_2_matched$parcel_level_latitude))
 
 pass1_2_matched_sf <- sf::st_as_sf(pass1_2_matched %>% filter(!is.na(parcel_level_latitude)), coords = c("parcel_level_longitude", "parcel_level_latitude"))
 
 pass1_2_3_matched_sf <- sf::st_as_sf(pass1_2_3_matched %>% filter(!is.na(parcel_level_latitude)), coords = c("parcel_level_longitude", "parcel_level_latitude"))
 
-leaflet(pass1_matched_sf) %>%
-  addTiles() %>%
-  addCircleMarkers(radius = 0.5) 
-
-# What matched in rounds 1,2,3
-leaflet(pass1_2_3_matched_sf) %>%
-  addTiles() %>%
-  addCircleMarkers(radius = 0.5) 
+# leaflet(pass1_matched_sf) %>%
+#   addTiles() %>%
+#   addCircleMarkers(radius = 0.5) 
+# 
+# # What matched in rounds 1,2,3
+# leaflet(pass1_2_3_matched_sf) %>%
+#   addTiles() %>%
+#   addCircleMarkers(radius = 0.5) 
   # addCircleMarkers(lat = as.numeric(pass3_matched$parcel_level_latitude), lng = as.numeric(pass3_matched$parcel_level_longitude), radius = 0.5, color = "#32CD32")
 
 # What hasn't matched in rounds 1,2,3
@@ -625,7 +625,9 @@ leaflet(pass1_matched_sf) %>%
                    popup = ~htmlEscape(pass4_matched$`Property Location`))
 ```
 
-
+# What was leftover from what was matchable
+pink = county
+green = corelogic
 ```{r}
 leaflet(pass1_matched_sf) %>%
   addTiles() %>%
@@ -642,7 +644,7 @@ leaflet(pass1_matched_sf) %>%
   setView(lat = 37.511136, lng = -77.009578, zoom = 11)
 
 ```
-
+#Repeats - largely missing house numbers on both sides
 
 ```{r}
 leaflet(pass1_matched_sf) %>%
@@ -664,6 +666,7 @@ cty_prep_to_match_PASS_R_dig <- cty_prep_to_match_PASS_R %>% filter(str_detect(`
 cl_prep_to_match_PASS_R_dig <- cl_prep_to_match_PASS_R %>% filter(!is.na(situs_house_number))
 ```
 
+# Repeats with numbers - inappropriate matches 
 
 ```{r}
 
