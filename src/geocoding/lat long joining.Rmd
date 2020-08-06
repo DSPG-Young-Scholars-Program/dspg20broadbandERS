@@ -1,0 +1,150 @@
+---
+title: "lat long joining"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(tidygeocoder)
+library(dplyr)
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(sf)  
+# install.packages('venn')
+library(venn)
+# install.packages('ggthemes')
+library(ggthemes)
+# install.packages('DataExplorer')
+library(DataExplorer)
+```
+
+
+```{r}
+ffx_na <- ffx_2018 %>%
+  filter(!is.na(situs_house_number)) %>%
+  filter(!is.na(situs_street_name)) %>%
+  filter(!is.na(situs_mode)) %>%
+  filter(!is.na(situs_city)) %>%
+  filter(!is.na(situs_state)) %>%
+  filter(!is.na(situs_zip_code))
+
+
+
+ffx_na$addr <- paste0(ffx_na$situs_house_number, ", ",
+                   
+                   ffx_na$situs_street_name, ", ",
+                   
+                   ffx_na$situs_mode, ", ",
+                   
+                   ffx_na$situs_city, ", ", 
+                   
+                   ffx_na$situs_state, ", ",
+                   
+                   ffx_na$situs_zip_code)
+
+ffx_cl <- ffx_cl_geo_census %>%
+  filter(!is.na(lat)) %>%
+  filter(!is.na(long))
+
+na_ffx <- ffx_2018 %>%
+  filter(addr == !("NA, NA, NA, NA , NA , NA ")) #7683 all NAs
+
+
+ffx_addr_join <- left_join(ffx_na, ffx_cl_geo_census, by="addr", suffix = c(".cl", ".geo"))
+
+
+ffx_addr_join$unique_id <- paste0(ffx_addr_join$lat,ffx_addr_join$long)
+
+ffx_geo_cens_part <- ffx_cl_geo_census %>%
+  select(lat, long, addr)
+
+fairfax_housing_2018_geo$unique_id <- paste0(fairfax_housing_2018_geo$LATITUDE,fairfax_housing_2018_geo$LONGITUDE)
+
+ffx_unique_id_join <- left_join(fairfax_housing_2018_geo, ffx_addr_join, by="unique_id", suffix = c(".ffx", ".cl"))
+
+```
+
+
+```{r}
+
+### COUNTY DATA
+original_newkent_county <-read_excel("~/git/dspg20broadbandERS/data/new-kent-data/NK ASSESSMENT REPORT 2020.xlsx") #13,650
+geocoded_newkent_county <- readRDS("~/git/dspg20broadbandERS/data/geocoding-output/geocoded_newkent_countydata_20JULY2020.RDS") #13,468
+
+subset_geocoded_nk <- geocoded_newkent_county %>%
+                      filter(!is.na(lat)) #,8988
+
+###### CORELOGIC DATA
+con <- get_db_conn()
+
+nk_2018 <- DBI::dbGetQuery(con, statement = paste(
+  "SELECT fips_code, apn__parcel_number_unformatted_, apn_sequence_number, original_apn, census_tract, legal_lot_number, township, municipality_code,
+  property_indicator_code, assessed_total_value, market_total_value, tax_amount, tax_year, assessed_year, 
+  acres, land_square_footage, building_square_feet, living_square_feet, year_built, effective_year_built, 
+  bedrooms, total_baths, full_baths, half_baths, parcel_level_latitude, parcel_level_longitude, block_level_latitude, block_level_longitude,
+  situs_house_number, situs_street_name, situs_mode, situs_city, situs_state, situs_zip_code",
+  "FROM corelogic_sdad.tax_hist_2_51",
+  "WHERE fips_code='51127' AND tax_year = '2018' ")) #12,690
+
+
+
+subset_cl_nk <- nk_2018 %>%
+                filter(!is.na(parcel_level_latitude)) #12,359
+
+###
+head(subset_geocoded_nk$lat)
+head(subset_cl_nk$parcel_level_latitude)
+
+subset_cl_nk$parcel_level_latitude <- as.numeric(subset_cl_nk$parcel_level_latitude)
+subset_cl_nk$parcel_level_latitude <- round(subset_cl_nk$parcel_level_latitude, 5)
+
+subset_cl_nk$parcel_level_longitude <- as.numeric(subset_cl_nk$parcel_level_longitude)
+subset_cl_nk$parcel_level_longitude <- round(subset_cl_nk$parcel_level_longitude, 5)
+
+lat_long_join_nk <- subset_geocoded_nk %>%
+  inner_join(subset_cl_nk, by = c("lat" = "parcel_level_latitude", "long" = "parcel_level_longitude")) 
+
+head(lat_long_join_nk)
+
+subset_cl_nk %>% count(parcel_level_longitude)
+
+
+subset_geocoded_nk  %>% head()
+#####
+
+original_newkent_county
+Property Location # string of house number, streetname, and street type
+City
+State
+Zip
+
+
+nk_2018 
+
+situs_state
+situs_city
+situs_zipcode
+situs_street_name
+situs_house_number
+#725
+#2890
+# 9 
+
+original_newkent_county %>% count(City, State, Zip) %>%
+  inner_join(nk_2018 %>% count(situs_city, situs_state, situs_zip_code), 
+            by =c("City" = "situs_city", "State"= "situs_state", "Zip" = "situs_zip_code")) %>% 
+  mutate(CL_missed = `n.x` - `n.y`)
+
+original_newkent_county %>% count(City, State, Zip)
+nk_2018 %>% count(situs_city, situs_state, situs_zip_code)
+
+View(original_newkent_county)
+
+```
+

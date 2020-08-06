@@ -21,10 +21,10 @@ nk_property_values <- add_row(nk_property_values, total_value = as.numeric(na.om
 # plot histograms
 options(scipen = 10)
 ggplot(nk_property_values, aes(x = total_value)) +
-  geom_histogram(data = subset(nk_property_values, data_source == "new_kent"), aes(fill = "New Kent"), alpha = 0.6) +
-  geom_histogram(data = subset(nk_property_values, data_source == "corelogic"), aes(fill = "CoreLogic"), alpha = 0.5) +
+  geom_histogram(data = subset(nk_property_values, data_source == "new_kent"), aes(fill = "New Kent"), alpha = 0.5) +
+  geom_histogram(data = subset(nk_property_values, data_source == "corelogic"), aes(fill = "CoreLogic"), alpha = 0.45) +
   theme_classic() +
-  scale_fill_manual(values = c("CoreLogic" = "blue", "New Kent" = "red")) +
+  scale_fill_manual(values = c("CoreLogic" = "#fdbb84", "New Kent" = "blue")) +
   scale_x_log10(label = comma) +
   scale_y_log10(label = comma) +
   labs(x = "Property Value", y = "Frequency", title = "Property Values in New Kent County", fill = "Dataset")

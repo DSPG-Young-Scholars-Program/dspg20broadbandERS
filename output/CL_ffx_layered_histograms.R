@@ -24,7 +24,7 @@ ggplot(ffx_property_values, aes(x = total_value)) +
   geom_histogram(data = subset(ffx_property_values, data_source == "fairfax"), aes(fill = "Fairfax"), alpha = 0.6) +
   geom_histogram(data = subset(ffx_property_values, data_source == "corelogic"), aes(fill = "CoreLogic"), alpha = 0.5) +
   theme_classic() +
-  scale_fill_manual(values = c("CoreLogic" = "blue", "Fairfax" = "red")) +
+  scale_fill_manual(values = c("CoreLogic" = "#2ca25f", "Fairfax" = "red")) +
   scale_x_log10(label = comma) +
   scale_y_log10(label = comma) +
   labs(x = "Property Value", y = "Frequency", title = "Property Values in Fairfax County", fill = "Dataset")

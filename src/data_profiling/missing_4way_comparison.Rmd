@@ -46,13 +46,15 @@ library(gridExtra)
 
 ```{r}
 ffx_sub <-  ffx_2018 %>%
-  select(legal_lot_number, assessed_total_value, year_built, land_square_footage, building_square_feet, living_square_feet, bedrooms, half_baths, full_baths)
+  select(assessed_total_value, year_built, land_square_footage, building_square_feet, living_square_feet, bedrooms, half_baths, full_baths)
+
 ffx_val <- ffx_2018 %>%
   select(legal_lot_number, assessed_total_value, year_built)
 ffx_land <- ffx_2018 %>%
   select(land_square_footage, building_square_feet, living_square_feet)
 ffx_bb <- ffx_2018 %>%
-  select(bedrooms, half_baths, full_baths)
+  select(bedrooms, half_baths, full_baths) 
+
 
 new_kent <- read_excel("~/Data.xlsx")
 nk_sub <- new_kent %>%
@@ -75,7 +77,7 @@ fairfax_bb <- fairfax_housing_2018_geo %>%
   select(BEDROOMS, BATHROOMS)
 
 sub_nk_cl <- nk_2018 %>%
-  select(legal_lot_number, assessed_total_value, year_built, land_square_footage, building_square_feet, living_square_feet, bedrooms, half_baths, full_baths)
+  select( assessed_total_value, year_built, land_square_footage, building_square_feet, living_square_feet, bedrooms, half_baths, full_baths)
 ```
 
 ```{r functions, include=FALSE}
@@ -145,18 +147,119 @@ theme_config = list(legend.position = c("bottom")))
     }
 }))
   output <- ggplot(missing_value, aes_string(x = "feature", 
-    y = "num_missing", fill = "Band")) + geom_bar(stat = "identity") + 
-   scale_fill_manual("Band", values = c("Good"="#0E879C","Okay"="#E57200","Poor"="#03AC13","Scarce"="#D9E12B")) + coord_flip() + xlab("Features") + 
-   ylab("Missing Rows")
+    y = "num_missing")) + geom_bar(stat = "identity", fill = "#0E879C") + coord_flip() + xlab("Features") +
+   ylab("Percent Missing Variables") +
+    scale_y_continuous(limits = c(0,200000)) +
+    scale_x_discrete(labels=c("half baths", "bedrooms", "full baths", "living sq. ft.", "building sq. ft.", "year built", "land sq. footage", "assessed total value"))
   geom_label_args_list <- list(mapping = aes(label = paste0(round(100 * 
     pct_missing, 2), "%")))
   output <- output + do.call("geom_label", c(geom_label_args_list, 
      geom_label_args))
   class(output) <- c("single", class(output))
-  plotDataExplorer(plot_obj = output, title = title, ggtheme = ggtheme, 
-   theme_config = theme_config)
+  plotDataExplorer(plot_obj = output, title = title, ggtheme = ggtheme, theme = theme(axis.title.y = element_text(size = rel(1.5), angle = 90), axis.title.x = element_text(size = rel(1.5)), axis.text = element_text(size = rel(1), colour = "black", face = "bold")))
 }
 ```
+
+
+```{r}
+plot_missing_2_1 <-
+function (data, group = list(Good = 0.05, Okay = 0.4, Poor = 0.8, 
+  Scarce =  1), geom_label_args = list(), title = NULL, ggtheme = theme_classic(), 
+theme_config = list(legend.position = c("bottom"))) 
+{
+  pct_missing <- Band <- NULL
+  missing_value <- data.table(profile_missing(data))
+  group <- group[sort.list(unlist(group))]
+  invisible(lapply(seq_along(group), function(i) {
+    if (i == 1) {
+      missing_value[pct_missing <= group[[i]], `:=`(Band,
+         names(group)[i])]
+    } else {
+  missing_value[pct_missing > group[[i - 1]] & pct_missing <= 
+     group[[i]], `:=`(Band, names(group)[i])]
+    }
+}))
+  output <- ggplot(missing_value, aes_string(x = "feature", 
+    y = "num_missing")) + geom_bar(stat = "identity", fill = "#0E879C") + coord_flip() + xlab("Features") + 
+   ylab("Percent Missing Variables") +
+    scale_y_continuous(limits = c(0,200000)) +
+    scale_x_discrete(labels=c("bedrooms", "bathrooms", "living area", "value total", "year built"))
+  geom_label_args_list <- list(mapping = aes(label = paste0(round(100 * 
+    pct_missing, 2), "%")))
+  output <- output + do.call("geom_label", c(geom_label_args_list, 
+     geom_label_args))
+  class(output) <- c("single", class(output))
+  plotDataExplorer(plot_obj = output, title = title, ggtheme = ggtheme, theme = theme(axis.title.y = element_text(size = rel(1.5), angle = 90), axis.title.x = element_text(size = rel(1.5)), axis.text = element_text(size = rel(1), colour = "black", face = "bold")))
+}
+```
+
+
+```{r}
+plot_missing_3 <-
+function (data, group = list(Good = 0.05, Okay = 0.4, Poor = 0.8, 
+  Scarce =  1), geom_label_args = list(), title = NULL, ggtheme = theme_classic(), 
+theme_config = list(legend.position = c("bottom"))) 
+{
+  pct_missing <- Band <- NULL
+  missing_value <- data.table(profile_missing(data))
+  group <- group[sort.list(unlist(group))]
+  invisible(lapply(seq_along(group), function(i) {
+    if (i == 1) {
+      missing_value[pct_missing <= group[[i]], `:=`(Band,
+         names(group)[i])]
+    } else {
+  missing_value[pct_missing > group[[i - 1]] & pct_missing <= 
+     group[[i]], `:=`(Band, names(group)[i])]
+    }
+}))
+  output <- ggplot(missing_value, aes_string(x = "feature", 
+    y = "num_missing")) + geom_bar(stat = "identity", fill = "#0E879C") + coord_flip() + xlab("Features") + 
+   ylab("Percent Missing Variables") +
+    scale_y_continuous(limits = c(0,15000))  +
+    scale_x_discrete(labels=c("number of half baths", "number of baths", " number of bedrooms", "legal", "year built", "building area (effective)", "building area (gross)", "land", "land acres (acres)" ))
+  geom_label_args_list <- list(mapping = aes(label = paste0(round(100 * 
+    pct_missing, 2), "%")))
+  output <- output + do.call("geom_label", c(geom_label_args_list, 
+     geom_label_args))
+  class(output) <- c("single", class(output))
+  plotDataExplorer(plot_obj = output, title = title, ggtheme = ggtheme, theme = theme(axis.title.y = element_text(size = rel(1.5), angle = 90), axis.title.x = element_text(size = rel(1.5)), axis.text = element_text(size = rel(1), colour = "black", face = "bold")))
+}
+```
+
+
+
+```{r}
+plot_missing_3_1 <-
+function (data, group = list(Good = 0.05, Okay = 0.4, Poor = 0.8, 
+  Scarce =  1), geom_label_args = list(), title = NULL, ggtheme = theme_classic(), 
+theme_config = list(legend.position = c("bottom"))) 
+{
+  pct_missing <- Band <- NULL
+  missing_value <- data.table(profile_missing(data))
+  group <- group[sort.list(unlist(group))]
+  invisible(lapply(seq_along(group), function(i) {
+    if (i == 1) {
+      missing_value[pct_missing <= group[[i]], `:=`(Band,
+         names(group)[i])]
+    } else {
+  missing_value[pct_missing > group[[i - 1]] & pct_missing <= 
+     group[[i]], `:=`(Band, names(group)[i])]
+    }
+}))
+  output <- ggplot(missing_value, aes_string(x = "feature", 
+    y = "num_missing")) + geom_bar(stat = "identity", fill = "#0E879C") + coord_flip() + xlab("Features") + 
+   ylab("Percent Missing Variables") +
+    scale_y_continuous(limits = c(0,15000))  +
+    scale_x_discrete(labels=c("building sq. ft.", "half baths", " bedrooms", "full baths", "living sq. ft.", "year built", "land sq. footage", "assessed total value" ))
+  geom_label_args_list <- list(mapping = aes(label = paste0(round(100 * 
+    pct_missing, 2), "%")))
+  output <- output + do.call("geom_label", c(geom_label_args_list, 
+     geom_label_args))
+  class(output) <- c("single", class(output))
+  plotDataExplorer(plot_obj = output, title = title, ggtheme = ggtheme, theme = theme(axis.title.y = element_text(size = rel(1.5), angle = 90), axis.title.x = element_text(size = rel(1.5)), axis.text = element_text(size = rel(1), colour = "black", face = "bold")))
+}
+```
+
 
 ```{r}
 plot_1a <- plot_missing(ffx_val)
@@ -177,11 +280,18 @@ grid.arrange(plot_1b, plot_2b, plot_3b, ncol = 3)
 
 grid.arrange(plot_1c, plot_2c, plot_3c, ncol = 3)
 
+plot_1 <- plot_missing_2(ffx_sub, title = "Fairfax County CoreLogic data- 2018", ggtheme = theme_classic(), theme = theme()) 
+                         
+plot_2 <- plot_missing_2_1(fairfax_sub, title = "Fairfax County data- 2018", ggtheme = theme_classic(), theme = theme())
 
-plot_1 <- plot_missing_2(ffx_sub, title = "Missing values in the CoreLogic Fairfax County data set", ggtheme = theme_classic()) 
-plot_2 <- plot_missing_2(fairfax_sub, title = "Missing values in the Fairfax County data set", ggtheme = theme_classic())
-plot_3 <- plot_missing_2(nk_sub, title = "Missing values in the New Kent County data set", ggtheme = theme_classic())
-plot_4 <- plot_missing_2(sub_nk_cl, title = "Missing values in the CoreLogic New Kent County data set", ggtheme = theme_classic())
+
+plot_3 <- plot_missing_3(nk_sub, title = "New Kent County data- 2018", ggtheme = theme_classic(), theme = theme())
+
+
+plot_4 <- plot_missing_3_1(sub_nk_cl, title = "New Kent County CoreLogic data- 2018", ggtheme = theme_classic(),theme = theme())
+
+
+
 ```
 
 
