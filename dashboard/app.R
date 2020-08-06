@@ -114,7 +114,7 @@ shinyApp(
                     p("Our project process included the following elements of the data science framework (pictured below):"),
                     h3("Data Discovery"),
                     column(12,
-                           img(src = "ds-framework.png", style = "display: inline; float: right;", width = "500px"),
+                           img(src = "ds-framework1.png", style = "display: inline; float: right;", width = "500px"),
                            p("We undertook a data discovery process to find datasets to benchmark against the proprietary CoreLogic housing dataset. We considered sample size, accessibility, geography, variables provided, and unit of analysis to ensure the datasets were appropriate and useful to the project. We narrowed down our findings to:"),
                            tags$ul(
                              tags$li("Property data from Fairfax County, Virginia, which is primarily affluent and urban"),
