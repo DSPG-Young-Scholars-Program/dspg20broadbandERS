@@ -3,23 +3,23 @@ customTheme <- shinyDashboardThemeDIY(
   
   ### general
   appFontFamily = "Arial"
-  ,appFontColor = "grey"
-  ,primaryFontColor = "grey"
+  ,appFontColor = "black"
+  ,primaryFontColor = "black"
   ,infoFontColor = "rgb(0,0,0)"
   ,successFontColor = "rgb(0,0,0)"
-  ,warningFontColor = "rgb(0,0,0)"
+  ,warningFontColor = "white"
   ,dangerFontColor = "rgb(0,0,0)"
   ,bodyBackColor = "rgb(248,248,248)"
   
   ### header
-  ,logoBackColor = "rgb(0,0,0)"
+  ,logoBackColor = "rgb(35,45,75)"
   
-  ,headerButtonBackColor = "rgb(0,0,0)"
-  ,headerButtonIconColor = "rgb(75,75,75)"
-  ,headerButtonBackColorHover = "rgb(210,210,210)"
-  ,headerButtonIconColorHover = "rgb(0,0,0)"
+  ,headerButtonBackColor = "rgb(35,45,75)"
+  ,headerButtonIconColor = "white"
+  ,headerButtonBackColorHover = "white"
+  ,headerButtonIconColorHover = "rgb(35,45,75)"
   
-  ,headerBackColor = "rgb(0,0,0)"
+  ,headerBackColor = "rgb(35,45,75)"
   ,headerBoxShadowColor = "#aaaaaa"
   ,headerBoxShadowSize = "2px 2px 2px"
   
@@ -33,7 +33,7 @@ customTheme <- shinyDashboardThemeDIY(
   #   ,colorMiddlePos = 50
   #   ,colorEndPos = 100
   # )
-  ,sidebarBackColor = "lightgrey"
+  ,sidebarBackColor = "white"
   ,sidebarPadding = 0
   
   ,sidebarMenuBackColor = "transparent"
@@ -46,39 +46,41 @@ customTheme <- shinyDashboardThemeDIY(
   ,sidebarUserTextColor = "grey"
   
   ,sidebarSearchBackColor = "rgb(55,72,80)"
-  ,sidebarSearchIconColor = "rgb(153,153,153)"
+  ,sidebarSearchIconColor = "rgb(white)" #*
   ,sidebarSearchBorderColor = "rgb(55,72,80)"
   
-  ,sidebarTabTextColor = "black"
+  ,sidebarTabTextColor = "black" #*
   ,sidebarTabTextSize = 13
   ,sidebarTabBorderStyle = "none none solid none"
   ,sidebarTabBorderColor = "rgb(35,106,135)"
   ,sidebarTabBorderWidth = 1
   
-  ,sidebarTabBackColorSelected = cssGradientThreeColors(
-    direction = "right"
-    ,colorStart = "rgba(44,222,235,1)"
-    ,colorMiddle = "rgba(44,222,235,1)"
-    ,colorEnd = "rgba(0,255,213,1)"
-    ,colorStartPos = 0
-    ,colorMiddlePos = 30
-    ,colorEndPos = 100
-  )
-  ,sidebarTabTextColorSelected = "black"
+  ,sidebarTabBackColorSelected = "rgb(235, 95, 12)"
+  #   cssGradientThreeColors(
+  #   direction = "right"
+  #   ,colorStart = "rgba(44,222,235,1)"
+  #   ,colorMiddle = "rgba(44,222,235,1)"
+  #   ,colorEnd = "rgba(0,255,213,1)"
+  #   ,colorStartPos = 0
+  #   ,colorMiddlePos = 30
+  #   ,colorEndPos = 100
+  # )
+  ,sidebarTabTextColorSelected = "white"
   ,sidebarTabRadiusSelected = "0px 0px 0px 0px"
   
-  ,sidebarTabBackColorHover = cssGradientThreeColors(
-    direction = "right"
-    ,colorStart = "rgba(44,222,235,1)"
-    ,colorMiddle = "rgba(44,222,235,1)"
-    ,colorEnd = "rgba(0,255,213,1)"
-    ,colorStartPos = 0
-    ,colorMiddlePos = 30
-    ,colorEndPos = 100
-  )
-  ,sidebarTabTextColorHover = "rgb(50,50,50)"
+  ,sidebarTabBackColorHover = "rgb(235, 95, 12)" #*
+  #   cssGradientThreeColors(
+  #   direction = "right"
+  #   ,colorStart = "rgba(44,222,235,1)"
+  #   ,colorMiddle = "rgba(44,222,235,1)"
+  #   ,colorEnd = "rgba(0,255,213,1)"
+  #   ,colorStartPos = 0
+  #   ,colorMiddlePos = 30
+  #   ,colorEndPos = 100
+  # )
+  ,sidebarTabTextColorHover = "white"
   ,sidebarTabBorderStyleHover = "none none solid none"
-  ,sidebarTabBorderColorHover = "rgb(75,126,151)"
+  ,sidebarTabBorderColorHover = "white" #*
   ,sidebarTabBorderWidthHover = 1
   ,sidebarTabRadiusHover = "0px 0px 0px 0px"
   
@@ -87,20 +89,20 @@ customTheme <- shinyDashboardThemeDIY(
   ,boxBorderRadius = 5
   ,boxShadowSize = "0px 1px 1px"
   ,boxShadowColor = "rgba(0,0,0,.1)"
-  ,boxTitleSize = 16
+  ,boxTitleSize = 21
   ,boxDefaultColor = "rgb(210,214,220)"
   ,boxPrimaryColor = "rgba(44,222,235,1)"
   ,boxInfoColor = "rgb(210,214,220)"
   ,boxSuccessColor = "rgba(0,255,213,1)"
-  ,boxWarningColor = "rgb(244,156,104)"
+  ,boxWarningColor = "rgb(35, 45, 75)"
   ,boxDangerColor = "rgb(255,88,55)"
   
   ,tabBoxTabColor = "rgb(255,255,255)"
   ,tabBoxTabTextSize = 14
-  ,tabBoxTabTextColor = "rgb(0,0,0)"
+  ,tabBoxTabTextColor = "white"
   ,tabBoxTabTextColorSelected = "rgb(0,0,0)"
   ,tabBoxBackColor = "rgb(255,255,255)"
-  ,tabBoxHighlightColor = "rgba(44,222,235,1)"
+  ,tabBoxHighlightColor = "white" #*
   ,tabBoxBorderRadius = 5
   
   ### inputs
