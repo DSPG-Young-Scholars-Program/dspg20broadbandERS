@@ -4,7 +4,7 @@ library(maps)
 library(data.table)
 
 # get your API key at https://api.census.gov/data/key_signup.html
-census_api_key("3ac2b3eb0dbd7e46af9a4ad90d6a6ac3e646fbc7")
+#census_api_key("YOUR_KEY")
 
 # continental + AK, HI state fips
 state_fips <- c( unique(state.fips$fips), 2, 15 )
