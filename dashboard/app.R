@@ -6,6 +6,7 @@ library(leaflet)
 library(dashboardthemes)
 library(tidyverse)
 library(gt)
+library(shinyjs)
 
 source("theme.R")
 
@@ -25,11 +26,26 @@ ffu_va_yrbuilt <- readRDS('data/ffu_va_yrbuilt.RDS')
 
 ruca_def <- read_csv('data/ruca_def.csv', col_types = cols(Code = col_factor()))
 
+jscode <- "var referer = document.referrer;
+           var n = referer.includes('economic');
+           var x = document.getElementsByClassName('logo');
+           if (n != true) {
+             x[0].innerHTML = '<a href=\"https://datascienceforthepublicgood.org/events/symposium2020/poster-sessions\">' +
+                              '<img src=\"DSPG_white-01.png\", alt=\"DSPG 2020 Symposium Proceedings\", style=\"height:42px;\">' +
+                             '</a>';
+           } else {
+             x[0].innerHTML = '<a href=\"https://datascienceforthepublicgood.org/economic-mobility/community-insights\">' +
+                              '<img src=\"AEMLogoGatesColors-11.png\", alt=\"Gates Economic Mobility Case Studies\", style=\"height:42px;\">' +
+                              '</a>';
+           }
+           "
+
 shinyApp(
   ui = dashboardPagePlus(
     title = "DashboardPage",
     header = dashboardHeaderPlus(
-      title = "DSPG 2020 ERS"
+      title = "DSPG 2020 ERS",
+      left_menu = tagList(div("EVALUATING RESIDENTIAL PROPERTY DATA QUALITY", style="height:35px; display:flex; align-items: center; color: silver;"))
       ),
 
 # SIDEBAR (LEFT) ----------------------------------------------------------
@@ -76,6 +92,7 @@ shinyApp(
 
 # BODY --------------------------------------------------------------------
     body = dashboardBody(
+      useShinyjs(),
       customTheme,
       fluidPage(
       tabItems(
@@ -506,7 +523,7 @@ shinyApp(
                            p("Quantitative Economics and Government")
                            )
                            ),
-                  
+
                   boxPlus(
                     title = "UVA SDAD members",
                     closable = FALSE,
@@ -556,6 +573,8 @@ shinyApp(
 
 # SERVER ------------------------------------------------------------------
   server = function(input, output, session) {
+    # Run JavaScript Code
+    runjs(jscode)
 
     # Render Housing Plot
     output$ctyhousing <- renderPlot({
